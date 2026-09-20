@@ -46,7 +46,15 @@ export async function scheduleNativeAlarm(alarm: Alarm): Promise<void> {
     return;
   }
   if (Platform.OS === 'ios' && AlarmKit) {
-    await AlarmKit.scheduleAlarm(alarm.id, alarm.hour, alarm.minute, isRepeatOnce(alarm), daysArray(alarm), alarm.label);
+    await AlarmKit.scheduleAlarm(
+      alarm.id,
+      alarm.hour,
+      alarm.minute,
+      isRepeatOnce(alarm),
+      daysArray(alarm),
+      alarm.label,
+      alarm.dismissMission !== 'none'
+    );
   } else if (Platform.OS === 'android' && AlarmAndroid) {
     AlarmAndroid.scheduleAlarm(
       alarm.id,
@@ -77,9 +85,24 @@ export async function cancelNativeAlarm(id: string): Promise<void> {
 export function dismissRingingAlarm(id: string): void {
   if (Platform.OS === 'android' && AlarmAndroid) {
     AlarmAndroid.dismissAlarm(id);
+  } else if (Platform.OS === 'ios' && AlarmKit) {
+    // The system Stop button never really stops a mission alarm (see UppyStopIntent) — this is
+    // the only path that actually calls AlarmManager.stop(), once the mission or Emergency Escape
+    // completes inside the app.
+    AlarmKit.stopRinging(id).catch((error) => {
+      console.warn('Failed to stop ringing alarm', id, error);
+    });
   }
-  // iOS: AlarmKit's own stopIntent (see UppyStopIntent.swift) handles the system-driven dismiss
-  // paths (tapping Stop, unlocking, swiping the Live Activity); nothing to call from JS here.
+}
+
+/** iOS only: set when the alert's "Dismiss Mission" button opened the app; null otherwise. */
+export function getPendingRingingAlarmId(): string | null {
+  if (Platform.OS !== 'ios' || !AlarmKit) return null;
+  return AlarmKit.getPendingRingingAlarmId();
+}
+
+export function clearPendingRingingAlarmId(): void {
+  AlarmKit?.clearPendingRingingAlarmId();
 }
 
 /** Android 13+ requires this runtime permission for RingingService's foreground notification. */

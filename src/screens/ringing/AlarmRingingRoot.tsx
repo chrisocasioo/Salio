@@ -20,19 +20,25 @@ type Screen = 'ringing' | 'missionCapture' | 'emergencyEscape';
 
 export type AlarmRingingRootProps = {
   alarmId?: string;
+  /** iOS only: called after dismissRingingAlarm so App.tsx can switch back to normal navigation. */
+  onDismissed?: () => void;
 };
 
 /**
- * The RN root rendered by Android's AlarmRingingActivity (registered as "alarmRinging" in
- * index.ts) once AlarmManager fires and RingingService posts its full-screen notification. Kept
- * deliberately separate from the main app's NavigationContainer/root component — it boots
- * straight to whichever alarm is ringing instead of the alarm list, and needs to survive being
- * launched while the rest of the app may not even be running.
+ * Renders whichever alarm is ringing instead of the normal alarm list/navigator, and needs to
+ * work whether or not the rest of the app was already running.
  *
- * iOS never launches this: AlarmKit owns the entire ringing UI there (lock screen alert, Live
- * Activity, Dynamic Island) per the build brief, so this root only matters on Android.
+ * On Android, this is the RN root booted by AlarmRingingActivity (registered as "alarmRinging" in
+ * index.ts) once AlarmManager fires and RingingService posts its full-screen notification — a
+ * separate Activity/process entry point from the main app.
+ *
+ * On iOS, AlarmKit owns the actual ringing alert (lock screen, Live Activity, Dynamic Island), but
+ * its automatic Stop button can't be gated for a mission alarm (see UppyStopIntent) — so the
+ * intended path is the alert's "Dismiss Mission" button, which opens the app and sets a pending
+ * ringing alarm id (see alarmScheduler.getPendingRingingAlarmId). App.tsx renders this same root
+ * in place of the normal navigator when that's set, since there's only one process/root on iOS.
  */
-export function AlarmRingingRoot({ alarmId }: AlarmRingingRootProps) {
+export function AlarmRingingRoot({ alarmId, onDismissed }: AlarmRingingRootProps) {
   const [fontsLoaded] = useFonts({
     EBGaramond_500Medium,
     EBGaramond_600SemiBold,
@@ -52,6 +58,7 @@ export function AlarmRingingRoot({ alarmId }: AlarmRingingRootProps) {
 
   const handleDismiss = () => {
     if (alarmId) dismissRingingAlarm(alarmId);
+    onDismissed?.();
   };
 
   if (!fontsLoaded || !alarm || !alarmId) {

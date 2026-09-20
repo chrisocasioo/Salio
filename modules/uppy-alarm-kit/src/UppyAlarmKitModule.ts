@@ -10,9 +10,15 @@ declare class UppyAlarmKitModule extends NativeModule<{}> {
     minute: number,
     repeatOnce: boolean,
     days: number[],
-    label: string
+    label: string,
+    hasMission: boolean
   ): Promise<void>;
   cancelAlarm(id: string): void;
+  /** Actually silences AlarmKit for this alarm once its dismiss mission (or Emergency Escape) completes. */
+  stopRinging(id: string): Promise<void>;
+  /** Set when the "Dismiss Mission" alert button opened the app; null otherwise. */
+  getPendingRingingAlarmId(): string | null;
+  clearPendingRingingAlarmId(): void;
 }
 
 export default requireNativeModule<UppyAlarmKitModule>('UppyAlarmKit');

@@ -3,19 +3,23 @@ import AlarmKit
 import Foundation
 
 /// Wraps AlarmKit's `AlarmManager` so JS can request authorization, and schedule/update/cancel
-/// alarms. AlarmKit owns the entire ringing UI on iOS (lock screen alert, Live Activity, Dynamic
-/// Island) — there is no custom ringing screen to build or wire up here, only `stopIntent`
-/// (see UppyStopIntent.swift). There is no `secondaryIntent`: Uppy has no snooze.
+/// alarms. AlarmKit owns the ringing UI on iOS (lock screen alert, Live Activity, Dynamic Island),
+/// but — confirmed on a real device — its automatic Stop button always ends the alert regardless
+/// of what `stopIntent` does (Apple's own docs: "The system provides a stop button automatically",
+/// not customizable or interceptable). For a mission alarm, `stopIntent` (UppyStopIntent) responds
+/// by re-arming a near-immediate follow-up alarm instead of truly stopping — see that file. The
+/// real stop only happens once the mission (or Emergency Escape) completes inside the app, reached
+/// via the alert's secondary "Dismiss Mission" button (`secondaryButtonBehavior: .custom`, which
+/// Apple documents as opening the app — see UppyOpenMissionIntent) and JS calling `stopRinging`.
 ///
 /// Verified against Apple's public AlarmKit documentation (developer.apple.com/documentation/
 /// alarmkit — fetched directly, not from memory): AlarmManager.AuthorizationState's three cases,
 /// AlarmManager.schedule(id:configuration:)/cancel(id:)/stop(id:)'s signatures, Alarm.id being a
-/// plain UUID, and the Alarm.Schedule.Relative(time:repeats:) shape used below all match exactly.
-/// This module also already compiled clean (no warnings) against the real iOS 26 SDK on EAS's
-/// build servers. What's still unverified for lack of a real device: that a *scheduled* alarm
-/// actually alerts through a locked/silenced phone — see the explicit authorization check and
-/// AlarmError surfacing added below, since a real-device report of alarms not ringing traced back
-/// to that failure being swallowed silently on the JS side rather than a scheduling bug per se.
+/// plain UUID, the Alarm.Schedule.Relative(time:repeats:) shape, and the non-deprecated
+/// AlarmPresentation.Alert(title:secondaryButton:secondaryButtonBehavior:) initializer (the
+/// `stopButton:` parameter this module used previously is deprecated and does nothing — Apple's
+/// docs: "This property is not used anymore") all match exactly. Compiles clean (no warnings)
+/// against the real iOS 26 SDK.
 public class UppyAlarmKitModule: Module {
   public func definition() -> ModuleDefinition {
     Name("UppyAlarmKit")
@@ -29,7 +33,7 @@ public class UppyAlarmKitModule: Module {
       Self.authorizationStateName(AlarmManager.shared.authorizationState)
     }
 
-    AsyncFunction("scheduleAlarm") { (id: String, hour: Int, minute: Int, repeatOnce: Bool, days: [Int], label: String) in
+    AsyncFunction("scheduleAlarm") { (id: String, hour: Int, minute: Int, repeatOnce: Bool, days: [Int], label: String, hasMission: Bool) in
       guard let uuid = UUID(uuidString: id) else {
         throw UppyAlarmKitError.invalidId
       }
@@ -63,12 +67,29 @@ public class UppyAlarmKitModule: Module {
         )
       }
 
-      let stopButton = AlarmButton(text: "Dismiss", textColor: .white, systemImageName: "stop.fill")
-      let alert = AlarmPresentation.Alert(title: LocalizedStringResource(stringLiteral: label.isEmpty ? "Alarm" : label), stopButton: stopButton)
+      let displayLabel = label.isEmpty ? "Alarm" : label
+      // Persisted so UppyStopIntent (which may run in a fresh process) knows whether to re-arm,
+      // and so re-armed nag alerts can show the same label. Reset any leftover ringing state from
+      // a previous occurrence of this same alarm id.
+      UppyAlarmStore.setLabel(displayLabel, forAlarmID: id)
+      UppyAlarmStore.setHasMission(hasMission, forAlarmID: id)
+      UppyAlarmStore.resetRingingState(forAlarmID: id)
+
+      let alert: AlarmPresentation.Alert
+      if hasMission {
+        let missionButton = AlarmButton(text: "Dismiss Mission", textColor: .white, systemImageName: "target")
+        alert = AlarmPresentation.Alert(
+          title: LocalizedStringResource(stringLiteral: displayLabel),
+          secondaryButton: missionButton,
+          secondaryButtonBehavior: .custom
+        )
+      } else {
+        alert = AlarmPresentation.Alert(title: LocalizedStringResource(stringLiteral: displayLabel))
+      }
       let presentation = AlarmPresentation(alert: alert)
       let attributes = AlarmAttributes<UppyAlarmMetadata>(
         presentation: presentation,
-        metadata: UppyAlarmMetadata(label: label),
+        metadata: UppyAlarmMetadata(label: displayLabel),
         tintColor: .accentColor
       )
 
@@ -76,6 +97,7 @@ public class UppyAlarmKitModule: Module {
         schedule: schedule,
         attributes: attributes,
         stopIntent: UppyStopIntent(alarmID: id),
+        secondaryIntent: hasMission ? UppyOpenMissionIntent(alarmID: id) : nil,
         sound: .default
       )
 
@@ -93,6 +115,29 @@ public class UppyAlarmKitModule: Module {
         throw UppyAlarmKitError.invalidId
       }
       try AlarmManager.shared.cancel(id: uuid)
+      UppyAlarmStore.resetRingingState(forAlarmID: id)
+    }
+
+    // Called once the mission (or Emergency Escape) actually completes inside the app. Resolves
+    // whichever AlarmKit id is currently ringing for this alarm — the original id, or a later
+    // re-arm nag id — since UppyStopIntent's re-arms never touch the original alarm's own id.
+    AsyncFunction("stopRinging") { (id: String) in
+      let currentIDString = UppyAlarmStore.currentRingingAlarmKitID(forAlarmID: id)
+      if let currentUUID = UUID(uuidString: currentIDString) {
+        try? AlarmManager.shared.stop(id: currentUUID)
+      }
+      UppyAlarmStore.resetRingingState(forAlarmID: id)
+      if UppyAlarmStore.pendingRingingAlarmID() == id {
+        UppyAlarmStore.clearPendingRingingAlarmID()
+      }
+    }
+
+    Function("getPendingRingingAlarmId") { () -> String? in
+      UppyAlarmStore.pendingRingingAlarmID()
+    }
+
+    Function("clearPendingRingingAlarmId") {
+      UppyAlarmStore.clearPendingRingingAlarmID()
     }
   }
 
