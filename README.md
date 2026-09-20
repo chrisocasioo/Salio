@@ -1,4 +1,4 @@
-# Uppy
+# Wake Uppy
 
 A simple alarm app for iOS and Android with no snooze — dismissing is the
 only way an alarm stops. Alarms can optionally require a "dismiss mission"

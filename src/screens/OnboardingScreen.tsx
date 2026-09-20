@@ -42,7 +42,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         <View style={styles.logoBadge}>
           <AlarmClockIcon size={26} color={colors.gold} />
         </View>
-        <Text style={styles.title}>Welcome to Uppy</Text>
+        <Text style={styles.title}>Welcome to Wake Uppy</Text>
         <Text style={styles.subtitle}>
           A few permissions so your alarms ring reliably, even through silent mode and a locked
           screen.
@@ -52,8 +52,8 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
           title="Alarms"
           description={
             isAndroid
-              ? 'Lets Uppy schedule exact alarms that ring on time.'
-              : 'Lets Uppy schedule alarms through AlarmKit.'
+              ? 'Lets Wake Uppy schedule exact alarms that ring on time.'
+              : 'Lets Wake Uppy schedule alarms through AlarmKit.'
           }
           granted={alarmsGranted}
           onPress={handleAlarms}
@@ -90,7 +90,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         {isAndroid && (
           <PermissionRow
             title="Battery optimization"
-            description="Exempts Uppy so the system doesn't stop it from ringing on time."
+            description="Exempts Wake Uppy so the system doesn't stop it from ringing on time."
             granted={batteryGranted}
             onPress={() => {
               requestIgnoreBatteryOptimizations();
