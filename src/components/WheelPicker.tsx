@@ -43,6 +43,13 @@ export function WheelPicker({
         decelerationRate="fast"
         getItemLayout={(_, index) => ({ length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index })}
         initialScrollIndex={selectedIndex}
+        // FlatList's default windowing only renders ~10 items up front, which combined with
+        // initialScrollIndex leaves the scrolled-to items unrendered (blank) until the user
+        // scrolls and forces a layout pass. These lists are small (<=60 items of plain text), so
+        // just render them all immediately instead of windowing.
+        initialNumToRender={values.length}
+        maxToRenderPerBatch={values.length}
+        windowSize={values.length}
         contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * VISIBLE_SIDE_ITEMS }}
         onMomentumScrollEnd={handleMomentumEnd}
         style={{ height: ITEM_HEIGHT * (VISIBLE_SIDE_ITEMS * 2 + 1) }}
