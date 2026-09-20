@@ -9,6 +9,7 @@ export type EditorStackParamList = {
 export type RootStackParamList = {
   AlarmList: undefined;
   Editor: { alarmId?: string };
+  Settings: undefined;
 };
 
 declare global {

@@ -3,7 +3,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AlarmClockIcon, PlusIcon, TargetIcon } from '../components/icons';
+import { AlarmClockIcon, GearIcon, PlusIcon, TargetIcon } from '../components/icons';
 import type { RootStackParamList } from '../navigation/types';
 import { listAlarms, setAlarmEnabled } from '../services/alarmRepository';
 import { colors, fonts } from '../theme/theme';
@@ -44,14 +44,24 @@ export function AlarmListScreen({ navigation }: Props) {
           </View>
           <Text style={styles.headerTitle}>Alarms</Text>
         </View>
-        <Pressable
-          onPress={() => navigation.navigate('Editor', {})}
-          accessibilityLabel="Add alarm"
-          accessibilityRole="button"
-          style={styles.addButton}
-        >
-          <PlusIcon />
-        </Pressable>
+        <View style={styles.headerRight}>
+          <Pressable
+            onPress={() => navigation.navigate('Settings')}
+            accessibilityLabel="Settings"
+            accessibilityRole="button"
+            style={styles.settingsButton}
+          >
+            <GearIcon size={19} color={colors.inkDim} />
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate('Editor', {})}
+            accessibilityLabel="Add alarm"
+            accessibilityRole="button"
+            style={styles.addButton}
+          >
+            <PlusIcon />
+          </Pressable>
+        </View>
       </View>
 
       <FlatList
@@ -127,6 +137,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   logoBadge: {
     width: 34,
