@@ -7,6 +7,7 @@ import { Header } from '../components/Header';
 import { BoltIcon, CircleIcon, GridIcon, TargetIcon } from '../components/icons';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
 import type { EditorStackParamList } from '../navigation/types';
+import { RANDOM_OBJECT_LABELS } from './RandomObjectSetupScreen';
 import { colors, radii } from '../theme/theme';
 import type { DismissMission } from '../types/alarm';
 
@@ -38,7 +39,14 @@ export function MissionPickerScreen({ navigation }: Props) {
   const [selected, setSelected] = useState<DismissMission>(draft.dismissMission);
 
   const handleSave = () => {
-    updateDraft({ dismissMission: selected });
+    // The first time an alarm switches to Random Object, start with every item in the pool
+    // selected (rather than none) — matches the pool screen's own copy ("we'll pick one at
+    // random"), and an empty pool would otherwise leave the mission impossible to complete.
+    const randomObjectPool =
+      selected === 'random_object' && draft.randomObjectPool.length === 0
+        ? RANDOM_OBJECT_LABELS.map((o) => o.key)
+        : draft.randomObjectPool;
+    updateDraft({ dismissMission: selected, randomObjectPool });
     navigation.goBack();
   };
 
