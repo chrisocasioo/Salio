@@ -1,1 +1,4 @@
-// Define your exported module types here.
+export type ClassificationCategory = {
+  text: string;
+  confidence: number;
+};
