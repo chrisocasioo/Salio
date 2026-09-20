@@ -99,12 +99,6 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
           />
         )}
 
-        {!isAndroid && (
-          <Text style={styles.footnote}>
-            Don't force-quit Wake Uppy or restart your phone without reopening the app afterward —
-            either one can stop alarms from ringing until you open Wake Uppy again.
-          </Text>
-        )}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -229,12 +223,5 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     paddingBottom: 24,
-  },
-  footnote: {
-    fontSize: 12,
-    color: colors.inkFaint,
-    textAlign: 'center',
-    lineHeight: 17,
-    marginTop: 4,
   },
 });

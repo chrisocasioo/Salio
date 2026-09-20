@@ -16,7 +16,8 @@ import UserNotifications
 /// using this exact silent-AVAudioPlayer keep-alive technique — not something invented here.
 /// Known limitation shared by any non-AlarmKit approach (including, per that plugin's own docs):
 /// force-quitting the app or restarting the device stops alarms from ringing until the app is
-/// reopened once, since nothing can survive that on iOS.
+/// reopened once, since nothing can survive that on iOS. refreshForceQuitWarning() surfaces that
+/// to the person exactly when it happens, rather than as an upfront onboarding disclaimer.
 final class UppyAlarmScheduler {
   static let shared = UppyAlarmScheduler()
   private init() {}
@@ -24,6 +25,12 @@ final class UppyAlarmScheduler {
   private var keepAlivePlayer: AVAudioPlayer?
   private var ringPlayer: AVAudioPlayer?
   private var pollTimer: Timer?
+
+  private static let forceQuitWarningID = "UppyForceQuitWarning"
+  /// How far out the warning is scheduled each heartbeat — long enough that the ~5s poll interval
+  /// can always defer it again before it fires during normal operation, short enough that a real
+  /// kill surfaces the warning promptly.
+  private static let forceQuitWarningDelay: TimeInterval = 15
 
   // MARK: - Keep-alive / ringing lifecycle
 
@@ -39,6 +46,7 @@ final class UppyAlarmScheduler {
     }
 
     ensurePolling()
+    refreshForceQuitWarning()
 
     if isRinging {
       return // ringPlayer already owns the session; leave it alone.
@@ -92,6 +100,7 @@ final class UppyAlarmScheduler {
     pollTimer = nil
     keepAlivePlayer?.stop()
     ringPlayer?.stop()
+    cancelForceQuitWarning()
     try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
   }
 
@@ -99,9 +108,37 @@ final class UppyAlarmScheduler {
     guard pollTimer == nil else { return }
     let timer = Timer(timeInterval: 5, repeats: true) { [weak self] _ in
       self?.checkDue()
+      self?.refreshForceQuitWarning()
     }
     RunLoop.main.add(timer, forMode: .common)
     pollTimer = timer
+  }
+
+  /// Dead man's switch: there's no reliable way to detect the moment the app is force-quit on iOS
+  /// (applicationWillTerminate isn't called for a swipe-away kill), so instead this keeps deferring
+  /// a short-delay warning notification every ~5s while the app stays alive. If the process is
+  /// force-quit, crashes, is evicted for memory, or the device restarts, nothing cancels/reschedules
+  /// it anymore, so the last pending one fires on its own a few seconds later — surfacing the
+  /// warning exactly when it's actually relevant, never during normal operation.
+  private func refreshForceQuitWarning() {
+    let center = UNUserNotificationCenter.current()
+    center.removePendingNotificationRequests(withIdentifiers: [Self.forceQuitWarningID])
+
+    let hasArmed = !UppyAlarmStore.armedAlarmIDs().isEmpty
+    let isRinging = UppyAlarmStore.currentlyRingingAlarmID() != nil
+    guard hasArmed || isRinging else { return }
+
+    let content = UNMutableNotificationContent()
+    content.title = "Wake Uppy was closed"
+    content.body = "Reopen the app — closing it can stop an alarm from ringing or let it skip the dismiss mission."
+    content.sound = .default
+    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Self.forceQuitWarningDelay, repeats: false)
+    let request = UNNotificationRequest(identifier: Self.forceQuitWarningID, content: content, trigger: trigger)
+    center.add(request, withCompletionHandler: nil)
+  }
+
+  private func cancelForceQuitWarning() {
+    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Self.forceQuitWarningID])
   }
 
   private func checkDue() {
