@@ -9,8 +9,8 @@ import UserNotifications
 /// a real local notification, and tapping a notification is Apple's actually-guaranteed way to
 /// bring an app to the foreground — this delegate just makes sure that notification is presented
 /// even if the app happens to already be in the foreground when it arrives.
-class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotificationCenterDelegate {
-  func application(
+public class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotificationCenterDelegate {
+  public func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
@@ -18,7 +18,7 @@ class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotificationCen
     return true
   }
 
-  func userNotificationCenter(
+  public func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
@@ -26,7 +26,7 @@ class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotificationCen
     completionHandler([.banner, .sound])
   }
 
-  func userNotificationCenter(
+  public func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
