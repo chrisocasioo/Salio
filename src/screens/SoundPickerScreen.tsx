@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoldButton } from '../components/GoldButton';
@@ -8,38 +8,42 @@ import { CheckIcon, SoundWaveIcon } from '../components/icons';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
 import type { EditorStackParamList } from '../navigation/types';
 import { colors } from '../theme/theme';
+import type { AlarmSound } from '../../modules/uppy-alarm-android';
 
 type Props = NativeStackScreenProps<EditorStackParamList, 'SoundPicker'>;
 
-// Placeholder list until Stage 3 wires the real RingtoneManager (TYPE_ALARM) cursor on Android.
-const PLACEHOLDER_SOUNDS = [
-  { uri: null, name: 'Default' },
-  { uri: 'chimes', name: 'Chimes' },
-  { uri: 'daybreak', name: 'Daybreak' },
-  { uri: 'ascend', name: 'Ascend' },
-  { uri: 'gentle-waves', name: 'Gentle Waves' },
-  { uri: 'classic-bell', name: 'Classic Bell' },
-  { uri: 'pulse', name: 'Pulse' },
-  { uri: 'radiance', name: 'Radiance' },
-  { uri: 'silver-dawn', name: 'Silver Dawn' },
-];
+const DEFAULT_SOUND: AlarmSound = { uri: '', name: 'Default' };
 
 export function SoundPickerScreen({ navigation }: Props) {
   const { draft, updateDraft } = useAlarmDraft();
+  const [sounds, setSounds] = useState<AlarmSound[]>([DEFAULT_SOUND]);
+
+  useEffect(() => {
+    // This screen only opens on Android (see AddEditAlarmScreen's Platform.OS check), so the
+    // module is always the real one there; the try/catch just protects a bare JS bundling
+    // context (e.g. Expo Go) where the native module was never linked.
+    try {
+      const AlarmAndroid = require('../../modules/uppy-alarm-android').default;
+      const deviceSounds: AlarmSound[] = AlarmAndroid.listAlarmSounds();
+      setSounds([DEFAULT_SOUND, ...deviceSounds]);
+    } catch {
+      setSounds([DEFAULT_SOUND]);
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <Header title="Sound" onBack={() => navigation.goBack()} />
       <FlatList
-        data={PLACEHOLDER_SOUNDS}
-        keyExtractor={(s) => s.uri ?? 'default'}
+        data={sounds}
+        keyExtractor={(s) => s.uri || 'default'}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
-          const selected = draft.androidSoundUri === item.uri;
+          const selected = (draft.androidSoundUri ?? '') === item.uri;
           return (
             <Pressable
               style={styles.row}
-              onPress={() => updateDraft({ androidSoundUri: item.uri })}
+              onPress={() => updateDraft({ androidSoundUri: item.uri || null })}
               accessibilityRole="button"
               accessibilityState={{ selected }}
             >

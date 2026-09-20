@@ -112,8 +112,9 @@ Mac — see the comments at the top of `UppyAlarmKitModule.swift` and
       device pass** (see Known limitations) — the "Done when" checkpoints
       (rings through a locked/silenced phone on both platforms, survives
       reboot + DST, `stopIntent` fires on every dismiss path) are unverified.
-- [ ] **Stage 3** — Sound: Android `RingtoneManager` picker; iOS static
-      "Default" row.
+- [x] **Stage 3** — Sound: Android `RingtoneManager` picker (real on-device
+      alarm sounds via `listAlarmSounds`, wired in Stage 2's Kotlin module);
+      iOS static "Default" row, no picker UI.
 - [ ] **Stage 4** — Mission framework + Random Object (ML Kit image
       labeling).
 - [ ] **Stage 5** — Custom Object mission (MediaPipe Image Embedder native
