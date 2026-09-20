@@ -69,9 +69,12 @@ export function AlarmRingingRoot({ alarmId }: AlarmRingingRootProps) {
   if (screen === 'missionCapture') {
     return (
       <MissionCaptureScreen
+        mission={alarm.dismissMission}
+        targetKey={missionTarget?.key ?? ''}
         targetLabel={missionTarget?.label ?? 'the object'}
+        customObject={alarm.customObject}
+        onSuccess={handleDismiss}
         onEmergencyEscape={() => setScreen('emergencyEscape')}
-        onDismiss={handleDismiss}
       />
     );
   }

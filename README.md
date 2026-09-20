@@ -115,8 +115,14 @@ Mac — see the comments at the top of `UppyAlarmKitModule.swift` and
 - [x] **Stage 3** — Sound: Android `RingtoneManager` picker (real on-device
       alarm sounds via `listAlarmSounds`, wired in Stage 2's Kotlin module);
       iOS static "Default" row, no picker UI.
-- [ ] **Stage 4** — Mission framework + Random Object (ML Kit image
-      labeling).
+- [x] **Stage 4** — Mission framework + Random Object (ML Kit image
+      labeling): Mission Picker and Random Object Pool (from Stage 1) now
+      lead into a real ringing flow — "Start Mission" opens the camera,
+      runs `@react-native-ml-kit/image-labeling` (base bundled model, both
+      platforms) against the capture, and only dismisses on a confident
+      match against the picked pool item; otherwise it shows a retry
+      banner. Custom Object capture takes the photo but always "matches"
+      until Stage 5 wires the real embedder (see `customObjectMatch.ts`).
 - [ ] **Stage 5** — Custom Object mission (MediaPipe Image Embedder native
       module).
 - [ ] **Stage 6** — Emergency Escape (100/+100/30-day-reset tap bypass).
@@ -131,3 +137,10 @@ ML Kit, and MediaPipe running on real hardware — are implemented as
 best-effort native code against the documented APIs, verified by
 type-checking and Metro bundling only. They still need a real-device pass
 per the "Done when" checkpoints in the build brief before shipping.
+
+`@react-native-ml-kit/image-labeling` (Stage 4) is a classic-bridge native
+module (`ReactContextBaseJavaModule` / `RCT_EXPORT_MODULE`), not yet tested
+against React Native's New Architecture per React Native Directory — RN
+0.86 talks to it through the New Architecture's backward-compatibility
+interop layer, which should work but is unverified here for the same
+reason as everything else native: no real device to run it on.
