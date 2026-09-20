@@ -42,9 +42,20 @@ export function AddEditAlarmScreen({ navigation }: Props) {
 
   const handleSave = async () => {
     const toSave = draft.id ? draft : { ...draft, id: Crypto.randomUUID() };
-    await requestAlarmPermissions();
-    await saveAlarm(toSave);
-    navigation.getParent()?.goBack();
+    try {
+      await requestAlarmPermissions();
+    } catch (error) {
+      // Permission prompts/authorization can fail for reasons outside our control (denied,
+      // not yet settled, ...); the alarm itself should still save locally either way.
+      console.warn('Failed to request alarm permissions', error);
+    }
+    try {
+      await saveAlarm(toSave);
+      navigation.getParent()?.goBack();
+    } catch (error) {
+      console.warn('Failed to save alarm', error);
+      Alert.alert('Could not save alarm', 'Something went wrong. Please try again.');
+    }
   };
 
   const handleDelete = () => {
@@ -54,8 +65,13 @@ export function AddEditAlarmScreen({ navigation }: Props) {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          if (draft.id) await deleteAlarm(draft.id);
-          navigation.getParent()?.goBack();
+          try {
+            if (draft.id) await deleteAlarm(draft.id);
+            navigation.getParent()?.goBack();
+          } catch (error) {
+            console.warn('Failed to delete alarm', error);
+            Alert.alert('Could not delete alarm', 'Something went wrong. Please try again.');
+          }
         },
       },
     ]);
