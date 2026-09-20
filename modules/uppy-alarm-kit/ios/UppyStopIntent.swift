@@ -53,7 +53,7 @@ struct UppyStopIntent: LiveActivityIntent {
     )
 
     let label = UppyAlarmStore.label(forAlarmID: alarmID)
-    let missionButton = AlarmButton(text: "Tap to end", textColor: .uppyGold, systemImageName: "target")
+    let missionButton = AlarmButton(text: "Tap to end", textColor: .black, systemImageName: "target")
     let alert = AlarmPresentation.Alert(
       title: LocalizedStringResource(stringLiteral: label),
       secondaryButton: missionButton,
@@ -62,7 +62,7 @@ struct UppyStopIntent: LiveActivityIntent {
     let attributes = AlarmAttributes<UppyAlarmMetadata>(
       presentation: AlarmPresentation(alert: alert),
       metadata: UppyAlarmMetadata(label: label),
-      tintColor: .accentColor
+      tintColor: .uppyGold
     )
 
     let nagID = UUID()

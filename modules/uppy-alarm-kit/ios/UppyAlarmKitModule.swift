@@ -85,7 +85,7 @@ public class UppyAlarmKitModule: Module {
 
       let alert: AlarmPresentation.Alert
       if hasMission {
-        let missionButton = AlarmButton(text: "Tap to end", textColor: .uppyGold, systemImageName: "target")
+        let missionButton = AlarmButton(text: "Tap to end", textColor: .black, systemImageName: "target")
         alert = AlarmPresentation.Alert(
           title: LocalizedStringResource(stringLiteral: displayLabel),
           secondaryButton: missionButton,
@@ -98,7 +98,7 @@ public class UppyAlarmKitModule: Module {
       let attributes = AlarmAttributes<UppyAlarmMetadata>(
         presentation: presentation,
         metadata: UppyAlarmMetadata(label: displayLabel),
-        tintColor: .accentColor
+        tintColor: .uppyGold
       )
 
       let configuration = AlarmManager.AlarmConfiguration(
