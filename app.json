@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Uppy",
+    "slug": "Uppy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "uppy",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#15120D",
+    "ios": {
+      "bundleIdentifier": "com.uppy.alarm",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Uppy needs your camera to verify the object for a dismiss mission.",
+        "UIBackgroundModes": ["audio"]
+      }
+    },
+    "android": {
+      "package": "com.uppy.alarm",
+      "adaptiveIcon": {
+        "backgroundColor": "#15120D",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_EXACT_ALARM",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.WAKE_LOCK",
+        "android.permission.VIBRATE",
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+      ]
+    },
+    "platforms": ["ios", "android"],
+    "plugins": [
+      "expo-sqlite",
+      "expo-localization",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Uppy needs your camera to verify the object for a dismiss mission."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "26.0"
+          },
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ]
+    ]
+  }
+}
