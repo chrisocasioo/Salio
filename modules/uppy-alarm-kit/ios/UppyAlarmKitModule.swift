@@ -33,7 +33,7 @@ public class UppyAlarmKitModule: Module {
       // Also needed so UppyOpenMissionIntent's "tap to open" notification (its only reliable way
       // to foreground the app — see that file) actually shows; best-effort, doesn't affect the
       // alarm itself if denied, since AlarmKit's own alert always appears regardless.
-      UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
+      _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
       return Self.authorizationStateName(state)
     }
 

@@ -33,7 +33,7 @@ struct UppyOpenMissionIntent: LiveActivityIntent {
     content.body = "Tap to complete your dismiss mission."
     content.sound = .default
     let request = UNNotificationRequest(identifier: "UppyMission.\(alarmID)", content: content, trigger: nil)
-    UNUserNotificationCenter.current().add(request)
+    try? await UNUserNotificationCenter.current().add(request)
 
     return .result()
   }
