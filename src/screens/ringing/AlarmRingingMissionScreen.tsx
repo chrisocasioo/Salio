@@ -12,10 +12,14 @@ export function AlarmRingingMissionScreen({
   alarm,
   targetLabel,
   onStartMission,
+  canReroll,
+  onReroll,
 }: {
   alarm: Alarm;
   targetLabel: string;
   onStartMission: () => void;
+  canReroll?: boolean;
+  onReroll?: () => void;
 }) {
   const { main, ampm } = formatTimeParts(alarm.hour, alarm.minute);
 
@@ -43,6 +47,11 @@ export function AlarmRingingMissionScreen({
         <Pressable onPress={onStartMission} style={styles.pillButton}>
           <Text style={styles.pillButtonText}>{t('alarmRinging.startMission')}</Text>
         </Pressable>
+        {canReroll ? (
+          <Pressable onPress={onReroll} hitSlop={8} style={styles.rerollButton}>
+            <Text style={styles.rerollText}>{t('alarmRinging.reroll')}</Text>
+          </Pressable>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -129,5 +138,14 @@ const styles = StyleSheet.create({
     color: colors.bg,
     fontSize: 16,
     fontWeight: '600',
+  },
+  rerollButton: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  rerollText: {
+    fontSize: 13,
+    color: colors.inkDim,
+    textDecorationLine: 'underline',
   },
 });

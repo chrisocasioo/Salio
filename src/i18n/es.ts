@@ -129,6 +129,7 @@ export const es: typeof en = {
     find: 'Busca: {{target}}',
     takePhotoToTurnOff: 'Toma una foto para apagar esta alarma.',
     startMission: 'Iniciar misión',
+    reroll: '¿No lo encuentras? Prueba con otro objeto',
     emergency: 'Emergencia',
     couldNotTakePhoto: 'No se pudo tomar la foto — intenta de nuevo',
     matchFoundDismissing: 'Coincidencia encontrada — deteniendo…',

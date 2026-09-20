@@ -62,6 +62,11 @@ export function AlarmRingingRoot({ alarmId, onDismissed }: AlarmRingingRootProps
     onDismissed?.();
   };
 
+  const handleReroll = () => {
+    if (!alarm) return;
+    setMissionTarget(pickMissionTarget(alarm, missionTarget?.key));
+  };
+
   if (!fontsLoaded || !alarm || !alarmId) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
@@ -90,6 +95,8 @@ export function AlarmRingingRoot({ alarmId, onDismissed }: AlarmRingingRootProps
         alarm={alarm}
         targetLabel={missionTarget.label}
         onStartMission={() => setScreen('missionCapture')}
+        canReroll={alarm.dismissMission === 'random_object' && alarm.randomObjectPool.length > 1}
+        onReroll={handleReroll}
       />
     );
   } else {

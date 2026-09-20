@@ -127,6 +127,7 @@ export const en = {
     find: 'Find: {{target}}',
     takePhotoToTurnOff: 'Take a photo to turn off this alarm.',
     startMission: 'Start Mission',
+    reroll: 'Can’t find it? Try a different object',
     emergency: 'Emergency',
     couldNotTakePhoto: 'Could not take photo — try again',
     matchFoundDismissing: 'Match found — dismissing…',
