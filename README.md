@@ -147,8 +147,16 @@ the real thing, not just documentation. See its own README for details.
       `src/services/emergencyEscape.ts` holds the 100/+100/30-day-reset
       logic against the sqlite-backed `EmergencyEscapeState` from Stage 0.
       Pure JS/TS — nothing native needed for this stage.
-- [ ] **Stage 7** — Polish: permission copy, first-run flow, real-device
-      checklist.
+- [x] **Stage 7** — Polish: an Onboarding screen (`src/screens/OnboardingScreen.tsx`)
+      shown once on first launch (tracked via a new `settings` sqlite table)
+      walks through each permission with its own copy and an Allow button —
+      alarms (AlarmKit auth on iOS, exact-alarm settings on Android),
+      camera, and Android's notification/exact-alarm/battery-optimization
+      permissions. `DEVICE_CHECKLIST.md` at the repo root is the real-device
+      checklist called for by this stage, covering every "Done when" from
+      Stages 1-6 plus the Section 6 known risks — this is a checklist to
+      work through on real hardware, not something that could be completed
+      in this sandbox.
 
 ## Known limitations of this environment
 
@@ -157,7 +165,8 @@ attached, so stages 2 and up — which require AlarmKit, AlarmManager,
 ML Kit, and MediaPipe running on real hardware — are implemented as
 best-effort native code against the documented APIs, verified by
 type-checking and Metro bundling only. They still need a real-device pass
-per the "Done when" checkpoints in the build brief before shipping.
+per the "Done when" checkpoints in the build brief before shipping — see
+`DEVICE_CHECKLIST.md`.
 
 `@react-native-ml-kit/image-labeling` (Stage 4) is a classic-bridge native
 module (`ReactContextBaseJavaModule` / `RCT_EXPORT_MODULE`), not yet tested

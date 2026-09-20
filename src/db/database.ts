@@ -33,6 +33,12 @@ function getDb(): Promise<SQLite.SQLiteDatabase> {
           lastUsedAt INTEGER
         );
       `);
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL
+        );
+      `);
       return db;
     });
   }
@@ -158,5 +164,20 @@ export async function saveEmergencyEscapeState(state: EmergencyEscapeState): Pro
     `INSERT INTO emergency_escape (id, requiredTaps, lastUsedAt) VALUES (1, ?, ?)
      ON CONFLICT(id) DO UPDATE SET requiredTaps=excluded.requiredTaps, lastUsedAt=excluded.lastUsedAt;`,
     [state.requiredTaps, state.lastUsedAt]
+  );
+}
+
+export async function getSetting(key: string): Promise<string | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?;', [key]);
+  return row?.value ?? null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value=excluded.value;`,
+    [key, value]
   );
 }

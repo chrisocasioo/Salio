@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
 import type { Alarm } from '../types/alarm';
 
 // Both native modules are optional at import time: on a platform that doesn't build them in
@@ -80,4 +80,28 @@ export function dismissRingingAlarm(id: string): void {
   }
   // iOS: AlarmKit's own stopIntent (see UppyStopIntent.swift) handles the system-driven dismiss
   // paths (tapping Stop, unlocking, swiping the Live Activity); nothing to call from JS here.
+}
+
+/** Android 13+ requires this runtime permission for RingingService's foreground notification. */
+export async function requestNotificationPermission(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+}
+
+export function canScheduleExactAlarms(): boolean {
+  if (Platform.OS !== 'android' || !AlarmAndroid) return true;
+  return AlarmAndroid.canScheduleExactAlarms();
+}
+
+export function openExactAlarmSettings(): void {
+  AlarmAndroid?.openExactAlarmSettings();
+}
+
+export function isIgnoringBatteryOptimizations(): boolean {
+  if (Platform.OS !== 'android' || !AlarmAndroid) return true;
+  return AlarmAndroid.isIgnoringBatteryOptimizations();
+}
+
+export function requestIgnoreBatteryOptimizations(): void {
+  AlarmAndroid?.requestIgnoreBatteryOptimizations();
 }
