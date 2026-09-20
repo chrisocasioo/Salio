@@ -1,14 +1,19 @@
 import * as Localization from 'expo-localization';
 import { en } from './en';
 import { es } from './es';
+import { fr } from './fr';
+import { pt } from './pt';
+import { ja } from './ja';
 
-type SupportedLocale = 'en' | 'es';
+type SupportedLocale = 'en' | 'es' | 'fr' | 'pt' | 'ja';
 
-const dictionaries: Record<SupportedLocale, typeof en> = { en, es };
+const dictionaries: Record<SupportedLocale, typeof en> = { en, es, fr, pt, ja };
 
 function detectLocale(): SupportedLocale {
   const languageCode = Localization.getLocales()[0]?.languageCode;
-  return languageCode === 'es' ? 'es' : 'en';
+  return languageCode !== null && languageCode !== undefined && languageCode in dictionaries
+    ? (languageCode as SupportedLocale)
+    : 'en';
 }
 
 export const locale: SupportedLocale = detectLocale();
