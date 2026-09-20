@@ -1,7 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlarmClockIcon, PlusIcon, TargetIcon } from '../components/icons';
 import type { RootStackParamList } from '../navigation/types';
@@ -27,8 +27,12 @@ export function AlarmListScreen({ navigation }: Props) {
   );
 
   const toggle = async (alarm: Alarm) => {
-    setAlarms((prev) => prev.map((a) => (a.id === alarm.id ? { ...a, enabled: !a.enabled } : a)));
-    await setAlarmEnabled(alarm, !alarm.enabled);
+    const enabling = !alarm.enabled;
+    setAlarms((prev) => prev.map((a) => (a.id === alarm.id ? { ...a, enabled: enabling } : a)));
+    const schedulingError = await setAlarmEnabled(alarm, enabling);
+    if (schedulingError) {
+      Alert.alert('Alarm may not ring', schedulingError);
+    }
   };
 
   return (

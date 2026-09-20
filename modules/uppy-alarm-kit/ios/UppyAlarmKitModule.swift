@@ -7,11 +7,15 @@ import Foundation
 /// Island) — there is no custom ringing screen to build or wire up here, only `stopIntent`
 /// (see UppyStopIntent.swift). There is no `secondaryIntent`: Uppy has no snooze.
 ///
-/// UNVERIFIED AGAINST THE REAL SDK: this was written from the AlarmKit WWDC25 session and public
-/// docs without a Mac/Xcode 26 toolchain available to compile-check (this module was built in a
-/// Linux sandbox). Treat every AlarmKit type/parameter name below as "best effort, confirm on
-/// first real build" — in particular `Alarm.Schedule.Relative`'s shape, `AlarmPresentation.Alert`
-/// button parameters, and `AlarmManager.AlarmConfiguration`'s exact initializer labels.
+/// Verified against Apple's public AlarmKit documentation (developer.apple.com/documentation/
+/// alarmkit — fetched directly, not from memory): AlarmManager.AuthorizationState's three cases,
+/// AlarmManager.schedule(id:configuration:)/cancel(id:)/stop(id:)'s signatures, Alarm.id being a
+/// plain UUID, and the Alarm.Schedule.Relative(time:repeats:) shape used below all match exactly.
+/// This module also already compiled clean (no warnings) against the real iOS 26 SDK on EAS's
+/// build servers. What's still unverified for lack of a real device: that a *scheduled* alarm
+/// actually alerts through a locked/silenced phone — see the explicit authorization check and
+/// AlarmError surfacing added below, since a real-device report of alarms not ringing traced back
+/// to that failure being swallowed silently on the JS side rather than a scheduling bug per se.
 public class UppyAlarmKitModule: Module {
   public func definition() -> ModuleDefinition {
     Name("UppyAlarmKit")
@@ -28,6 +32,15 @@ public class UppyAlarmKitModule: Module {
     AsyncFunction("scheduleAlarm") { (id: String, hour: Int, minute: Int, repeatOnce: Bool, days: [Int], label: String) in
       guard let uuid = UUID(uuidString: id) else {
         throw UppyAlarmKitError.invalidId
+      }
+
+      // AlarmKit auto-requests authorization on first schedule if it's never been decided, but if
+      // the person already denied it (or dismissed the system prompt), scheduling will otherwise
+      // fail with an opaque error. Check first so JS gets a specific, actionable failure instead
+      // of alarms that silently never ring.
+      let authState = AlarmManager.shared.authorizationState
+      if authState == .denied {
+        throw UppyAlarmKitError.notAuthorized
       }
 
       let schedule: Alarm.Schedule
@@ -66,7 +79,13 @@ public class UppyAlarmKitModule: Module {
         sound: .default
       )
 
-      _ = try await AlarmManager.shared.schedule(id: uuid, configuration: configuration)
+      do {
+        _ = try await AlarmManager.shared.schedule(id: uuid, configuration: configuration)
+      } catch {
+        // Re-throw with the underlying AlarmKit error's own description attached (e.g.
+        // AlarmError.maximumLimitReached) so it isn't lost behind a generic bridge error message.
+        throw UppyAlarmKitError.schedulingFailed(error.localizedDescription)
+      }
     }
 
     Function("cancelAlarm") { (id: String) in
@@ -104,6 +123,19 @@ public class UppyAlarmKitModule: Module {
   }
 }
 
-enum UppyAlarmKitError: Error {
+enum UppyAlarmKitError: LocalizedError {
   case invalidId
+  case notAuthorized
+  case schedulingFailed(String)
+
+  var errorDescription: String? {
+    switch self {
+    case .invalidId:
+      return "Invalid alarm id."
+    case .notAuthorized:
+      return "Wake Uppy isn't authorized to schedule alarms. Enable it in Settings > Wake Uppy."
+    case .schedulingFailed(let reason):
+      return "Couldn't schedule the alarm: \(reason)"
+    }
+  }
 }

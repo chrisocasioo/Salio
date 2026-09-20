@@ -50,8 +50,13 @@ export function AddEditAlarmScreen({ navigation }: Props) {
       console.warn('Failed to request alarm permissions', error);
     }
     try {
-      await saveAlarm(toSave);
+      const schedulingError = await saveAlarm(toSave);
       navigation.getParent()?.goBack();
+      // The alarm is saved locally either way; a scheduling error means it won't actually ring,
+      // which is worth surfacing but shouldn't block navigating away from an otherwise-saved alarm.
+      if (schedulingError) {
+        Alert.alert('Alarm saved, but may not ring', schedulingError);
+      }
     } catch (error) {
       console.warn('Failed to save alarm', error);
       Alert.alert('Could not save alarm', 'Something went wrong. Please try again.');
