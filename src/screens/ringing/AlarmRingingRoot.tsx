@@ -85,6 +85,8 @@ export function AlarmRingingRoot({ alarmId, onDismissed }: AlarmRingingRootProps
         targetKey={missionTarget?.key ?? ''}
         targetLabel={missionTarget?.label ?? t('alarmRinging.defaultTarget')}
         customObject={alarm.customObject}
+        canReroll={alarm.dismissMission === 'random_object' && alarm.randomObjectPool.length > 1}
+        onReroll={handleReroll}
         onSuccess={handleDismiss}
         onEmergencyEscape={() => setScreen('emergencyEscape')}
       />
@@ -95,8 +97,6 @@ export function AlarmRingingRoot({ alarmId, onDismissed }: AlarmRingingRootProps
         alarm={alarm}
         targetLabel={missionTarget.label}
         onStartMission={() => setScreen('missionCapture')}
-        canReroll={alarm.dismissMission === 'random_object' && alarm.randomObjectPool.length > 1}
-        onReroll={handleReroll}
       />
     );
   } else {

@@ -16,6 +16,8 @@ export function MissionCaptureScreen({
   targetKey,
   targetLabel,
   customObject,
+  canReroll,
+  onReroll,
   onSuccess,
   onEmergencyEscape,
 }: {
@@ -23,6 +25,8 @@ export function MissionCaptureScreen({
   targetKey: string;
   targetLabel: string;
   customObject: CustomObject | null;
+  canReroll?: boolean;
+  onReroll?: () => void;
   onSuccess: () => void;
   onEmergencyEscape: () => void;
 }) {
@@ -66,6 +70,11 @@ export function MissionCaptureScreen({
     }
   };
 
+  const handleReroll = () => {
+    setBanner(null);
+    onReroll?.();
+  };
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.header}>
@@ -77,6 +86,12 @@ export function MissionCaptureScreen({
           <Text style={styles.emergency}>{t('alarmRinging.emergency')}</Text>
         </Pressable>
       </View>
+
+      {canReroll ? (
+        <Pressable onPress={handleReroll} hitSlop={8} style={styles.rerollRow}>
+          <Text style={styles.rerollText}>{t('alarmRinging.reroll')}</Text>
+        </Pressable>
+      ) : null}
 
       <View style={styles.viewfinder}>
         {permission?.granted ? (
@@ -140,6 +155,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
+  },
+  rerollRow: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  rerollText: {
+    fontSize: 12,
+    color: colors.inkDim,
+    textDecorationLine: 'underline',
   },
   viewfinder: {
     flex: 1,
