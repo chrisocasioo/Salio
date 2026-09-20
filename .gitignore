@@ -42,3 +42,7 @@ credentials.json
 # generated native folders
 /ios
 /android
+
+# scratch research notes/reports (not app source)
+/research_notes/
+/reports/
