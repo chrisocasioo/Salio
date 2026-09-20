@@ -4,7 +4,7 @@ import Foundation
 /// (UppyStopIntent, UppyOpenMissionIntent). The intents can run in a fresh process instance
 /// separate from whatever was running when the alarm was scheduled, so this is the only reliable
 /// way for them to share state: which alarm should re-arm after the system Stop button is tapped,
-/// and which alarm the app should open to when the "Dismiss Mission" button is tapped.
+/// and which alarm the app should open to when the "Tap to end" button is tapped.
 enum UppyAlarmStore {
   private static let defaults = UserDefaults.standard
   private static let pendingRingingKey = "UppyAlarm.pendingRingingId"

@@ -10,7 +10,7 @@ import UserNotifications
 /// not customizable or interceptable). For a mission alarm, `stopIntent` (UppyStopIntent) responds
 /// by re-arming a near-immediate follow-up alarm instead of truly stopping — see that file. The
 /// real stop only happens once the mission (or Emergency Escape) completes inside the app, reached
-/// via the alert's secondary "Dismiss Mission" button. Apple's docs describe
+/// via the alert's gold secondary "Tap to end" button. Apple's docs describe
 /// `secondaryButtonBehavior: .custom` as displaying "an action to launch the app", but confirmed
 /// on a real device that isn't automatic — like the primary button, its intent still only runs in
 /// the background, so UppyOpenMissionIntent instead posts a real local notification (tapping one
@@ -85,7 +85,7 @@ public class UppyAlarmKitModule: Module {
 
       let alert: AlarmPresentation.Alert
       if hasMission {
-        let missionButton = AlarmButton(text: "Dismiss Mission", textColor: .white, systemImageName: "target")
+        let missionButton = AlarmButton(text: "Tap to end", textColor: .uppyGold, systemImageName: "target")
         alert = AlarmPresentation.Alert(
           title: LocalizedStringResource(stringLiteral: displayLabel),
           secondaryButton: missionButton,

@@ -12,8 +12,8 @@ import Foundation
 /// stop itself can't be gated, this re-arms instead: it schedules a fresh, near-immediate alarm
 /// under a new AlarmKit id (never touching the original alarm's own recurring schedule) so the
 /// alarm simply comes back a short time later. Tapping Stop buys a brief, unwanted pause, not real
-/// silence — only the "Dismiss Mission" button (UppyOpenMissionIntent) or Emergency Escape,
-/// completed inside the app, actually stops AlarmKit (UppyAlarmKitModule.stopRinging).
+/// silence — only the "Tap to end" button (UppyOpenMissionIntent) or Emergency Escape, completed
+/// inside the app, actually stops AlarmKit (UppyAlarmKitModule.stopRinging).
 ///
 /// Alarms with no dismiss mission ("tap once to dismiss") skip all of this via hasMission below.
 struct UppyStopIntent: LiveActivityIntent {
@@ -53,7 +53,7 @@ struct UppyStopIntent: LiveActivityIntent {
     )
 
     let label = UppyAlarmStore.label(forAlarmID: alarmID)
-    let missionButton = AlarmButton(text: "Dismiss Mission", textColor: .white, systemImageName: "target")
+    let missionButton = AlarmButton(text: "Tap to end", textColor: .uppyGold, systemImageName: "target")
     let alert = AlarmPresentation.Alert(
       title: LocalizedStringResource(stringLiteral: label),
       secondaryButton: missionButton,

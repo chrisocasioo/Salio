@@ -2,7 +2,7 @@ import AppIntents
 import AlarmKit
 import UserNotifications
 
-/// Runs when the person taps the alert's secondary "Dismiss Mission" button. AlarmKit's
+/// Runs when the person taps the alert's gold secondary "Tap to end" button. AlarmKit's
 /// secondaryButtonBehavior: .custom (see UppyAlarmKitModule) is documented as displaying "an
 /// action to launch the app" — but confirmed on a real device, like every LiveActivityIntent it
 /// actually still only runs in the background, same as the primary Stop button (see
@@ -30,7 +30,7 @@ struct UppyOpenMissionIntent: LiveActivityIntent {
     let label = UppyAlarmStore.label(forAlarmID: alarmID)
     let content = UNMutableNotificationContent()
     content.title = label
-    content.body = "Tap to complete your dismiss mission."
+    content.body = "Tap to end your alarm."
     content.sound = .default
     let request = UNNotificationRequest(identifier: "UppyMission.\(alarmID)", content: content, trigger: nil)
     try? await UNUserNotificationCenter.current().add(request)
