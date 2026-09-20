@@ -1,8 +1,8 @@
 Pod::Spec.new do |s|
   s.name           = 'UppyAlarmKit'
   s.version        = '1.0.0'
-  s.summary        = 'Wraps AlarmKit for scheduling, updating, and cancelling alarms.'
-  s.description    = 'Wraps AlarmKit (AlarmManager, AlarmConfiguration, stopIntent) so JS can schedule, update, and cancel iOS 26+ alarms.'
+  s.summary        = 'Schedules, updates, and cancels alarms, and rings them reliably in the background.'
+  s.description    = 'Schedules local notifications and keeps a background AVAudioSession alive so alarms ring through silent mode/lock screen with a fully app-owned ringing screen (no OS-owned stop button).'
   s.author         = ''
   s.homepage       = 'https://docs.expo.dev/modules/'
   s.platforms      = {
@@ -19,4 +19,5 @@ Pod::Spec.new do |s|
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
+  s.resources = ['UppyKeepAlive.wav', 'UppyAlarmTone.wav']
 end

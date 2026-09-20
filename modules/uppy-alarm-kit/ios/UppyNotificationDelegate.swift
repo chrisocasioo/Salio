@@ -1,21 +1,24 @@
 import ExpoModulesCore
 import UserNotifications
 
-/// Registers as UNUserNotificationCenter's delegate at app launch. AlarmKit's alert
-/// secondaryButtonBehavior: .custom does NOT actually foreground the app on its own — it only
-/// runs UppyOpenMissionIntent in the background, same as the primary Stop button (confirmed on
-/// device: Apple's docs description ("displays an action to launch the app") turned out to
-/// describe the button's intent, not automatic OS behavior). UppyOpenMissionIntent instead posts
-/// a real local notification, and tapping a notification is Apple's actually-guaranteed way to
-/// bring an app to the foreground — this delegate just makes sure that notification is presented
-/// even if the app happens to already be in the foreground when it arrives.
+/// Registers as UNUserNotificationCenter's delegate at app launch, and is the entry point for the
+/// two ways a ringing alarm's notification reaches the app: the person taps it (didReceive
+/// response:), or the app happens to already be in the foreground when it's delivered (willPresent,
+/// where we still want the banner/sound to show). Also resumes the background keep-alive session
+/// on launch/foreground (see UppyAlarmScheduler) in case the app was relaunched after being
+/// evicted, or after a device restart.
 public class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotificationCenterDelegate {
   public func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     UNUserNotificationCenter.current().delegate = self
+    UppyAlarmScheduler.shared.armed()
     return true
+  }
+
+  public func applicationDidBecomeActive(_ application: UIApplication) {
+    UppyAlarmScheduler.shared.armed()
   }
 
   public func userNotificationCenter(
@@ -31,8 +34,14 @@ public class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotifica
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    // Tapping it is what foregrounds the app; App.tsx's own launch/foreground check picks up the
-    // pending ringing alarm id that UppyOpenMissionIntent already recorded. Nothing more to do.
+    if let alarmID = response.notification.request.content.userInfo["alarmId"] as? String {
+      UppyAlarmStore.setPendingRingingAlarmID(alarmID)
+      // Normally the polling timer already caught this and started ringing; if the app's process
+      // had been evicted, this is what makes it actually ring once reopened, rather than staying
+      // silent until the mission screen already shows.
+      let repeatOnce = UppyAlarmStore.repeatOnce(forAlarmID: alarmID)
+      UppyAlarmScheduler.shared.startRinging(alarmID: alarmID, repeatOnce: repeatOnce)
+    }
     completionHandler()
   }
 }

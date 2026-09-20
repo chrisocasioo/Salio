@@ -53,7 +53,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
           description={
             isAndroid
               ? 'Lets Wake Uppy schedule exact alarms that ring on time.'
-              : 'Lets Wake Uppy schedule alarms through AlarmKit.'
+              : 'Lets Wake Uppy notify you when an alarm rings.'
           }
           granted={alarmsGranted}
           onPress={handleAlarms}
@@ -97,6 +97,13 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
               setBatteryGranted(isIgnoringBatteryOptimizations());
             }}
           />
+        )}
+
+        {!isAndroid && (
+          <Text style={styles.footnote}>
+            Don't force-quit Wake Uppy or restart your phone without reopening the app afterward —
+            either one can stop alarms from ringing until you open Wake Uppy again.
+          </Text>
         )}
       </ScrollView>
 
@@ -222,5 +229,12 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     paddingBottom: 24,
+  },
+  footnote: {
+    fontSize: 12,
+    color: colors.inkFaint,
+    textAlign: 'center',
+    lineHeight: 17,
+    marginTop: 4,
   },
 });

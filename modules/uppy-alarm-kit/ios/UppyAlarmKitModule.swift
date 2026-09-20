@@ -1,143 +1,67 @@
 import ExpoModulesCore
-import AlarmKit
 import Foundation
 import UserNotifications
 
-/// Wraps AlarmKit's `AlarmManager` so JS can request authorization, and schedule/update/cancel
-/// alarms. AlarmKit owns the ringing UI on iOS (lock screen alert, Live Activity, Dynamic Island),
-/// but — confirmed on a real device — its automatic Stop button always ends the alert regardless
-/// of what `stopIntent` does (Apple's own docs: "The system provides a stop button automatically",
-/// not customizable or interceptable). For a mission alarm, `stopIntent` (UppyStopIntent) responds
-/// by re-arming a near-immediate follow-up alarm instead of truly stopping — see that file. The
-/// real stop only happens once the mission (or Emergency Escape) completes inside the app, reached
-/// via the alert's gold secondary "Tap to end" button. Apple's docs describe
-/// `secondaryButtonBehavior: .custom` as displaying "an action to launch the app", but confirmed
-/// on a real device that isn't automatic — like the primary button, its intent still only runs in
-/// the background, so UppyOpenMissionIntent instead posts a real local notification (tapping one
-/// is an OS-guaranteed way to foreground an app) and JS calls `stopRinging` once done.
+/// Schedules local notifications for each alarm and keeps a background AVAudioSession alive (see
+/// UppyAlarmScheduler) so the alarm rings continuously and reliably through silent mode/lock
+/// screen — no OS-owned alert UI at all, unlike AlarmKit. The ringing screen and its "Stop" button
+/// are drawn entirely by the app's own JS (see AlarmRingingRoot and friends), reached via the
+/// pending-ringing-id mechanism in UppyAlarmStore: the notification, when tapped, opens the app
+/// and UppyNotificationDelegate (an ExpoAppDelegateSubscriber) records which alarm to show.
+/// Tapping the app's own Stop button therefore routes straight into the dismiss-mission flow,
+/// since it's not a system control at all — there's nothing to work around.
 ///
-/// Verified against Apple's public AlarmKit documentation (developer.apple.com/documentation/
-/// alarmkit — fetched directly, not from memory): AlarmManager.AuthorizationState's three cases,
-/// AlarmManager.schedule(id:configuration:)/cancel(id:)/stop(id:)'s signatures, Alarm.id being a
-/// plain UUID, the Alarm.Schedule.Relative(time:repeats:) shape, and the non-deprecated
-/// AlarmPresentation.Alert(title:secondaryButton:secondaryButtonBehavior:) initializer (the
-/// `stopButton:` parameter this module used previously is deprecated and does nothing — Apple's
-/// docs: "This property is not used anymore") all match exactly. Compiles clean (no warnings)
-/// against the real iOS 26 SDK.
+/// Switched from Apple's AlarmKit framework after confirming (a) AlarmKit's alert screen is a
+/// fixed system template with no way to customize its background or replace its automatic Stop
+/// button, and (b) this local-notification + background-audio approach is the real, production-
+/// proven technique other alarm apps use (verified against gdelataillade/alarm, an open-source,
+/// App-Store-approved Flutter alarm plugin using the identical silent-AVAudioPlayer keep-alive
+/// pattern). Known limitation, same as any non-AlarmKit approach: force-quitting the app or
+/// restarting the device stops alarms from ringing until the app is reopened once.
 public class UppyAlarmKitModule: Module {
   public func definition() -> ModuleDefinition {
     Name("UppyAlarmKit")
 
     AsyncFunction("requestAuthorization") { () -> String in
-      let state = try await AlarmManager.shared.requestAuthorization()
-      // Also needed so UppyOpenMissionIntent's "tap to open" notification (its only reliable way
-      // to foreground the app — see that file) actually shows; best-effort, doesn't affect the
-      // alarm itself if denied, since AlarmKit's own alert always appears regardless.
-      _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
-      return Self.authorizationStateName(state)
-    }
-
-    Function("getAuthorizationStatus") { () -> String in
-      Self.authorizationStateName(AlarmManager.shared.authorizationState)
+      await withCheckedContinuation { continuation in
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+          continuation.resume(returning: granted ? "authorized" : "denied")
+        }
+      }
     }
 
     AsyncFunction("scheduleAlarm") { (id: String, hour: Int, minute: Int, repeatOnce: Bool, days: [Int], label: String, hasMission: Bool) in
-      guard let uuid = UUID(uuidString: id) else {
-        throw UppyAlarmKitError.invalidId
-      }
-
-      // AlarmKit auto-requests authorization on first schedule if it's never been decided, but if
-      // the person already denied it (or dismissed the system prompt), scheduling will otherwise
-      // fail with an opaque error. Check first so JS gets a specific, actionable failure instead
-      // of alarms that silently never ring.
-      let authState = AlarmManager.shared.authorizationState
-      if authState == .denied {
-        throw UppyAlarmKitError.notAuthorized
-      }
-
-      let schedule: Alarm.Schedule
-      if repeatOnce || days.isEmpty {
-        schedule = .relative(
-          Alarm.Schedule.Relative(
-            time: Alarm.Schedule.Relative.Time(hour: hour, minute: minute),
-            repeats: .never
-          )
-        )
-      } else {
-        // Our model's days are 0 (Sunday) ... 6 (Saturday); Locale.Weekday's ordering follows the
-        // same Sunday-first convention.
-        let weekdays: [Locale.Weekday] = days.compactMap { Self.weekday(fromModelDay: $0) }
-        schedule = .relative(
-          Alarm.Schedule.Relative(
-            time: Alarm.Schedule.Relative.Time(hour: hour, minute: minute),
-            repeats: .weekly(weekdays)
-          )
-        )
-      }
-
       let displayLabel = label.isEmpty ? "Alarm" : label
-      // Persisted so UppyStopIntent (which may run in a fresh process) knows whether to re-arm,
-      // and so re-armed nag alerts can show the same label. Reset any leftover ringing state from
-      // a previous occurrence of this same alarm id.
+
+      // Clear whatever was previously scheduled for this id (covers edits) before overwriting it.
+      let oldDays = UppyAlarmStore.days(forAlarmID: id)
+      let oldRepeatOnce = UppyAlarmStore.repeatOnce(forAlarmID: id)
+      UppyAlarmScheduler.shared.removeNotifications(forAlarmID: id, days: oldDays, repeatOnce: oldRepeatOnce)
+
       UppyAlarmStore.setLabel(displayLabel, forAlarmID: id)
       UppyAlarmStore.setHasMission(hasMission, forAlarmID: id)
-      UppyAlarmStore.resetRingingState(forAlarmID: id)
+      UppyAlarmStore.setSchedule(hour: hour, minute: minute, days: days, repeatOnce: repeatOnce, forAlarmID: id)
+      UppyAlarmStore.addArmedAlarmID(id)
 
-      let alert: AlarmPresentation.Alert
-      if hasMission {
-        let missionButton = AlarmButton(text: "Tap to end", textColor: .black, systemImageName: "target")
-        alert = AlarmPresentation.Alert(
-          title: LocalizedStringResource(stringLiteral: displayLabel),
-          secondaryButton: missionButton,
-          secondaryButtonBehavior: .custom
-        )
-      } else {
-        alert = AlarmPresentation.Alert(title: LocalizedStringResource(stringLiteral: displayLabel))
-      }
-      let presentation = AlarmPresentation(alert: alert)
-      let attributes = AlarmAttributes<UppyAlarmMetadata>(
-        presentation: presentation,
-        metadata: UppyAlarmMetadata(label: displayLabel),
-        tintColor: .uppyGold
+      UppyAlarmScheduler.shared.scheduleNotifications(
+        forAlarmID: id, hour: hour, minute: minute, days: days, repeatOnce: repeatOnce, label: displayLabel
       )
-
-      let configuration = AlarmManager.AlarmConfiguration(
-        schedule: schedule,
-        attributes: attributes,
-        stopIntent: UppyStopIntent(alarmID: id),
-        secondaryIntent: hasMission ? UppyOpenMissionIntent(alarmID: id) : nil,
-        sound: .default
-      )
-
-      do {
-        _ = try await AlarmManager.shared.schedule(id: uuid, configuration: configuration)
-      } catch {
-        // Re-throw with the underlying AlarmKit error's own description attached (e.g.
-        // AlarmError.maximumLimitReached) so it isn't lost behind a generic bridge error message.
-        throw UppyAlarmKitError.schedulingFailed(error.localizedDescription)
-      }
+      UppyAlarmScheduler.shared.armed()
     }
 
     Function("cancelAlarm") { (id: String) in
-      guard let uuid = UUID(uuidString: id) else {
-        throw UppyAlarmKitError.invalidId
+      let days = UppyAlarmStore.days(forAlarmID: id)
+      let repeatOnce = UppyAlarmStore.repeatOnce(forAlarmID: id)
+      UppyAlarmScheduler.shared.removeNotifications(forAlarmID: id, days: days, repeatOnce: repeatOnce)
+      if UppyAlarmStore.currentlyRingingAlarmID() == id {
+        UppyAlarmScheduler.shared.stopRinging(alarmID: id)
       }
-      try AlarmManager.shared.cancel(id: uuid)
-      UppyAlarmStore.resetRingingState(forAlarmID: id)
+      UppyAlarmStore.clearAlarm(forAlarmID: id)
+      UppyAlarmScheduler.shared.armed()
     }
 
-    // Called once the mission (or Emergency Escape) actually completes inside the app. Resolves
-    // whichever AlarmKit id is currently ringing for this alarm — the original id, or a later
-    // re-arm nag id — since UppyStopIntent's re-arms never touch the original alarm's own id.
     AsyncFunction("stopRinging") { (id: String) in
-      let currentIDString = UppyAlarmStore.currentRingingAlarmKitID(forAlarmID: id)
-      if let currentUUID = UUID(uuidString: currentIDString) {
-        try? AlarmManager.shared.stop(id: currentUUID)
-      }
-      UppyAlarmStore.resetRingingState(forAlarmID: id)
-      if UppyAlarmStore.pendingRingingAlarmID() == id {
-        UppyAlarmStore.clearPendingRingingAlarmID()
-      }
+      UppyAlarmScheduler.shared.stopRinging(alarmID: id)
     }
 
     Function("getPendingRingingAlarmId") { () -> String? in
@@ -146,49 +70,6 @@ public class UppyAlarmKitModule: Module {
 
     Function("clearPendingRingingAlarmId") {
       UppyAlarmStore.clearPendingRingingAlarmID()
-    }
-  }
-
-  private static func authorizationStateName(_ state: AlarmManager.AuthorizationState) -> String {
-    switch state {
-    case .authorized:
-      return "authorized"
-    case .denied:
-      return "denied"
-    case .notDetermined:
-      return "notDetermined"
-    @unknown default:
-      return "notDetermined"
-    }
-  }
-
-  private static func weekday(fromModelDay day: Int) -> Locale.Weekday? {
-    switch day {
-    case 0: return .sunday
-    case 1: return .monday
-    case 2: return .tuesday
-    case 3: return .wednesday
-    case 4: return .thursday
-    case 5: return .friday
-    case 6: return .saturday
-    default: return nil
-    }
-  }
-}
-
-enum UppyAlarmKitError: LocalizedError {
-  case invalidId
-  case notAuthorized
-  case schedulingFailed(String)
-
-  var errorDescription: String? {
-    switch self {
-    case .invalidId:
-      return "Invalid alarm id."
-    case .notAuthorized:
-      return "Wake Uppy isn't authorized to schedule alarms. Enable it in Settings > Wake Uppy."
-    case .schedulingFailed(let reason):
-      return "Couldn't schedule the alarm: \(reason)"
     }
   }
 }

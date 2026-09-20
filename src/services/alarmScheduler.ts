@@ -28,7 +28,7 @@ function isRepeatOnce(alarm: Alarm): boolean {
   return alarm.repeat === 'once';
 }
 
-/** iOS: AlarmKit requires authorization before the first schedule() call. */
+/** iOS: requests notification permission so the ringing alert's lock-screen banner can show. */
 export async function requestAlarmPermissions(): Promise<void> {
   if (Platform.OS === 'ios' && AlarmKit) {
     await AlarmKit.requestAuthorization();
@@ -81,21 +81,18 @@ export async function cancelNativeAlarm(id: string): Promise<void> {
   }
 }
 
-/** Stops the ringing service/notification (Android) or calls AlarmKit's stop (iOS) for a dismiss. */
+/** Stops the ringing service/notification (Android) or the ringing sound/keep-alive loop (iOS). */
 export function dismissRingingAlarm(id: string): void {
   if (Platform.OS === 'android' && AlarmAndroid) {
     AlarmAndroid.dismissAlarm(id);
   } else if (Platform.OS === 'ios' && AlarmKit) {
-    // The system Stop button never really stops a mission alarm (see UppyStopIntent) — this is
-    // the only path that actually calls AlarmManager.stop(), once the mission or Emergency Escape
-    // completes inside the app.
     AlarmKit.stopRinging(id).catch((error) => {
       console.warn('Failed to stop ringing alarm', id, error);
     });
   }
 }
 
-/** iOS only: set when the alert's "Dismiss Mission" button opened the app; null otherwise. */
+/** iOS only: set when the ringing notification opened the app; null otherwise. */
 export function getPendingRingingAlarmId(): string | null {
   if (Platform.OS !== 'ios' || !AlarmKit) return null;
   return AlarmKit.getPendingRingingAlarmId();

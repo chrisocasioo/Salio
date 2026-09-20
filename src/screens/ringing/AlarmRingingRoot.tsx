@@ -32,11 +32,10 @@ export type AlarmRingingRootProps = {
  * index.ts) once AlarmManager fires and RingingService posts its full-screen notification — a
  * separate Activity/process entry point from the main app.
  *
- * On iOS, AlarmKit owns the actual ringing alert (lock screen, Live Activity, Dynamic Island), but
- * its automatic Stop button can't be gated for a mission alarm (see UppyStopIntent) — so the
- * intended path is the alert's "Dismiss Mission" button, which opens the app and sets a pending
+ * On iOS, there's no separate process/root at all: a background AVAudioSession keeps the app
+ * alive to ring (see UppyAlarmScheduler) and a local notification opens it, setting a pending
  * ringing alarm id (see alarmScheduler.getPendingRingingAlarmId). App.tsx renders this same root
- * in place of the normal navigator when that's set, since there's only one process/root on iOS.
+ * in place of the normal navigator when that's set.
  */
 export function AlarmRingingRoot({ alarmId, onDismissed }: AlarmRingingRootProps) {
   const [fontsLoaded] = useFonts({

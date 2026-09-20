@@ -32,9 +32,9 @@ export default function App() {
     getSetting(ONBOARDING_SETTING_KEY).then((value) => setNeedsOnboarding(value !== 'true'));
   }, []);
 
-  // iOS only: AlarmKit's alert "Dismiss Mission" button opens the app and records which alarm to
-  // show (see UppyOpenMissionIntent) rather than pushing a normal navigation event, since it can
-  // launch the app from cold. Check on mount and every time the app comes back to the foreground.
+  // iOS only: opening the ringing notification records which alarm to show (see
+  // UppyNotificationDelegate) rather than pushing a normal navigation event, since it can launch
+  // the app from cold. Check on mount and every time the app comes back to the foreground.
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
     const checkPending = () => {
