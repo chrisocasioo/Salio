@@ -8,6 +8,7 @@ import { Header } from '../components/Header';
 import { ChevronRightIcon } from '../components/icons';
 import { WheelPicker } from '../components/WheelPicker';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
+import { t } from '../i18n';
 import type { EditorStackParamList } from '../navigation/types';
 import { deleteAlarm, saveAlarm } from '../services/alarmRepository';
 import { requestAlarmPermissions } from '../services/alarmScheduler';
@@ -55,19 +56,19 @@ export function AddEditAlarmScreen({ navigation }: Props) {
       // The alarm is saved locally either way; a scheduling error means it won't actually ring,
       // which is worth surfacing but shouldn't block navigating away from an otherwise-saved alarm.
       if (schedulingError) {
-        Alert.alert('Alarm saved, but may not ring', schedulingError);
+        Alert.alert(t('addEditAlarm.savedButMayNotRingTitle'), schedulingError);
       }
     } catch (error) {
       console.warn('Failed to save alarm', error);
-      Alert.alert('Could not save alarm', 'Something went wrong. Please try again.');
+      Alert.alert(t('addEditAlarm.couldNotSaveTitle'), t('addEditAlarm.genericErrorMessage'));
     }
   };
 
   const handleDelete = () => {
-    Alert.alert('Delete Alarm', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('addEditAlarm.deleteAlarm'), t('addEditAlarm.deleteConfirmMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -75,7 +76,7 @@ export function AddEditAlarmScreen({ navigation }: Props) {
             navigation.getParent()?.goBack();
           } catch (error) {
             console.warn('Failed to delete alarm', error);
-            Alert.alert('Could not delete alarm', 'Something went wrong. Please try again.');
+            Alert.alert(t('addEditAlarm.couldNotDeleteTitle'), t('addEditAlarm.genericErrorMessage'));
           }
         },
       },
@@ -87,9 +88,9 @@ export function AddEditAlarmScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <Header
-        title={isNew ? 'Add Alarm' : 'Edit Alarm'}
+        title={isNew ? t('addEditAlarm.titleAdd') : t('addEditAlarm.titleEdit')}
         onBack={() => navigation.getParent()?.goBack()}
-        rightLabel="Save"
+        rightLabel={t('addEditAlarm.save')}
         onRightPress={handleSave}
       />
       <ScrollView contentContainerStyle={styles.content}>
@@ -136,18 +137,18 @@ export function AddEditAlarmScreen({ navigation }: Props) {
         )}
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Label</Text>
+          <Text style={styles.fieldLabel}>{t('addEditAlarm.labelField')}</Text>
           <TextInput
             value={draft.label}
             onChangeText={(label) => updateDraft({ label })}
-            placeholder="Alarm label"
+            placeholder={t('addEditAlarm.labelPlaceholder')}
             placeholderTextColor={colors.inkFaint}
             style={styles.input}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Repeat</Text>
+          <Text style={styles.fieldLabel}>{t('addEditAlarm.repeat')}</Text>
           <View style={styles.dayRow}>
             {DAY_ORDER.map((day) => {
               const selected = selectedDays.has(day);
@@ -171,17 +172,19 @@ export function AddEditAlarmScreen({ navigation }: Props) {
         <View style={styles.linkGroup}>
           {Platform.OS === 'ios' ? (
             <View style={[styles.linkRow, styles.linkRowBorder]}>
-              <Text style={styles.linkRowLabel}>Sound</Text>
-              <Text style={styles.linkRowValueStatic}>Default</Text>
+              <Text style={styles.linkRowLabel}>{t('addEditAlarm.sound')}</Text>
+              <Text style={styles.linkRowValueStatic}>{t('addEditAlarm.soundDefault')}</Text>
             </View>
           ) : (
             <Pressable
               style={[styles.linkRow, styles.linkRowBorder]}
               onPress={() => navigation.navigate('SoundPicker')}
             >
-              <Text style={styles.linkRowLabel}>Sound</Text>
+              <Text style={styles.linkRowLabel}>{t('addEditAlarm.sound')}</Text>
               <View style={styles.linkRowValue}>
-                <Text style={styles.linkRowValueDim}>{draft.androidSoundUri ? 'Custom' : 'Default'}</Text>
+                <Text style={styles.linkRowValueDim}>
+                  {draft.androidSoundUri ? t('addEditAlarm.soundCustom') : t('addEditAlarm.soundDefault')}
+                </Text>
                 <ChevronRightIcon color={colors.inkDim} />
               </View>
             </Pressable>
@@ -191,7 +194,7 @@ export function AddEditAlarmScreen({ navigation }: Props) {
             style={[styles.linkRow, draft.dismissMission !== 'none' && styles.linkRowBorder]}
             onPress={() => navigation.navigate('MissionPicker')}
           >
-            <Text style={styles.linkRowLabel}>Dismiss mission</Text>
+            <Text style={styles.linkRowLabel}>{t('addEditAlarm.dismissMission')}</Text>
             <View style={styles.linkRowValue}>
               <Text style={styles.linkRowValueGold}>{missionText}</Text>
               <ChevronRightIcon color={colors.inkDim} />
@@ -200,13 +203,13 @@ export function AddEditAlarmScreen({ navigation }: Props) {
 
           {draft.dismissMission === 'random_object' && (
             <Pressable style={styles.linkRow} onPress={() => navigation.navigate('RandomObjectSetup')}>
-              <Text style={styles.linkRowLabel}>Random Object Pool</Text>
+              <Text style={styles.linkRowLabel}>{t('common.randomObjectPool')}</Text>
               <ChevronRightIcon color={colors.inkDim} />
             </Pressable>
           )}
           {draft.dismissMission === 'custom_object' && (
             <Pressable style={styles.linkRow} onPress={() => navigation.navigate('CustomObjectSetup')}>
-              <Text style={styles.linkRowLabel}>Custom Object</Text>
+              <Text style={styles.linkRowLabel}>{t('mission.customObject')}</Text>
               <ChevronRightIcon color={colors.inkDim} />
             </Pressable>
           )}
@@ -214,7 +217,7 @@ export function AddEditAlarmScreen({ navigation }: Props) {
 
         {!isNew && (
           <Pressable onPress={handleDelete} style={styles.deleteButton}>
-            <Text style={styles.deleteButtonText}>Delete Alarm</Text>
+            <Text style={styles.deleteButtonText}>{t('addEditAlarm.deleteAlarm')}</Text>
           </Pressable>
         )}
       </ScrollView>

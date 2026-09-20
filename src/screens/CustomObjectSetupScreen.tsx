@@ -7,6 +7,7 @@ import { GoldButton } from '../components/GoldButton';
 import { Header } from '../components/Header';
 import { CameraIcon, CheckIcon } from '../components/icons';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
+import { t } from '../i18n';
 import type { EditorStackParamList } from '../navigation/types';
 import { embedReferencePhotos } from '../services/customObjectMatch';
 import { colors, radii } from '../theme/theme';
@@ -58,14 +59,14 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <Header title="Custom Object" onBack={() => navigation.goBack()} />
+      <Header title={t('mission.customObject')} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Name</Text>
+          <Text style={styles.fieldLabel}>{t('customObjectSetup.nameLabel')}</Text>
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="e.g. Blue Mug"
+            placeholder={t('customObjectSetup.namePlaceholder')}
             placeholderTextColor={colors.inkFaint}
             style={styles.input}
           />
@@ -81,7 +82,7 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
           ) : (
             <>
               <CameraIcon size={34} color={colors.inkFaint} />
-              <Text style={styles.captureHint}>Tap to enable the camera</Text>
+              <Text style={styles.captureHint}>{t('customObjectSetup.tapToEnableCamera')}</Text>
             </>
           )}
           <View pointerEvents="none" style={[styles.corner, styles.cornerTL]} />
@@ -90,7 +91,7 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
           <View pointerEvents="none" style={[styles.corner, styles.cornerBR]} />
           {permission?.granted ? (
             <Text pointerEvents="none" style={styles.centerHint}>
-              Center the object
+              {t('customObjectSetup.centerObject')}
             </Text>
           ) : null}
         </Pressable>
@@ -98,7 +99,7 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
         <Pressable
           onPress={capture}
           style={[styles.shutter, (atMax || busy) && styles.shutterDisabled]}
-          accessibilityLabel="Take photo"
+          accessibilityLabel={t('common.takePhoto')}
           disabled={atMax || busy}
         >
           <View style={styles.shutterInner} />
@@ -126,15 +127,13 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
         </View>
 
         <Text style={styles.helperText}>
-          {atMax
-            ? 'That’s enough — tap Save Object below.'
-            : 'Take at least 2 photos, in the lighting you’ll use each morning.'}
+          {atMax ? t('customObjectSetup.helperEnough') : t('customObjectSetup.helperTakeAtLeast2')}
         </Text>
 
         {saving ? (
           <ActivityIndicator color={colors.gold} />
         ) : (
-          <GoldButton label="Save Object" onPress={handleSave} disabled={!canSave} />
+          <GoldButton label={t('customObjectSetup.saveObject')} onPress={handleSave} disabled={!canSave} />
         )}
       </ScrollView>
     </SafeAreaView>

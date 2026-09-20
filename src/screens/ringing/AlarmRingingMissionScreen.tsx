@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraIcon } from '../../components/icons';
+import { t } from '../../i18n';
 import { colors, fonts, radii } from '../../theme/theme';
 import type { Alarm } from '../../types/alarm';
 import { formatTimeParts } from '../../utils/time';
@@ -20,7 +21,7 @@ export function AlarmRingingMissionScreen({
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <Text style={styles.eyebrow}>Alarm</Text>
+      <Text style={styles.eyebrow}>{t('alarmRinging.eyebrow')}</Text>
 
       <View style={styles.center}>
         <View style={styles.timeRow}>
@@ -34,13 +35,13 @@ export function AlarmRingingMissionScreen({
         <View style={styles.missionIconBadge}>
           <CameraIcon size={22} color={colors.gold} />
         </View>
-        <Text style={styles.missionTitle}>Find: {targetLabel}</Text>
-        <Text style={styles.missionSubtitle}>Take a photo to turn off this alarm.</Text>
+        <Text style={styles.missionTitle}>{t('alarmRinging.find', { target: targetLabel })}</Text>
+        <Text style={styles.missionSubtitle}>{t('alarmRinging.takePhotoToTurnOff')}</Text>
       </View>
 
       <View style={styles.actions}>
         <Pressable onPress={onStartMission} style={styles.pillButton}>
-          <Text style={styles.pillButtonText}>Start Mission</Text>
+          <Text style={styles.pillButtonText}>{t('alarmRinging.startMission')}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

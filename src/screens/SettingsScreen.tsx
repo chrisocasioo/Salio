@@ -4,6 +4,7 @@ import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { ChevronRightIcon, FileTextIcon, GearIcon, LifeBuoyIcon, MailIcon, ShieldIcon } from '../components/icons';
+import { t } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, fonts, radii } from '../theme/theme';
 
@@ -18,70 +19,64 @@ async function openLink(url: string) {
   try {
     await Linking.openURL(url);
   } catch {
-    Alert.alert('Couldn’t open link', url);
+    Alert.alert(t('settings.couldNotOpenLink'), url);
   }
 }
 
 export function SettingsScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <Header title="Settings" onBack={() => navigation.goBack()} />
+      <Header title={t('settings.title')} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content}>
-        <SectionLabel label="Support" />
+        <SectionLabel label={t('settings.supportSection')} />
         <View style={styles.card}>
           <Row
             icon={<LifeBuoyIcon size={18} color={colors.gold} />}
-            title="Support Center"
-            subtitle="Help and answers for common issues"
+            title={t('settings.supportCenter')}
+            subtitle={t('settings.supportCenterSubtitle')}
             onPress={() => openLink(SUPPORT_URL)}
           />
           <Divider />
           <Row
             icon={<MailIcon size={18} color={colors.gold} />}
-            title="Contact Support"
+            title={t('settings.contactSupport')}
             subtitle={SUPPORT_EMAIL}
             onPress={() => openLink(`mailto:${SUPPORT_EMAIL}`)}
           />
         </View>
 
-        <SectionLabel label="Legal" />
+        <SectionLabel label={t('settings.legalSection')} />
         <View style={styles.card}>
           <Row
             icon={<ShieldIcon size={18} color={colors.gold} />}
-            title="Privacy Policy"
+            title={t('settings.privacyPolicy')}
             onPress={() => openLink(PRIVACY_URL)}
           />
           <Divider />
           <Row
             icon={<FileTextIcon size={18} color={colors.gold} />}
-            title="Terms of Use"
+            title={t('settings.termsOfUse')}
             onPress={() => openLink(TERMS_URL)}
           />
         </View>
 
-        <SectionLabel label="Permissions" />
+        <SectionLabel label={t('settings.permissionsSection')} />
         <View style={styles.card}>
           <Row
             icon={<GearIcon size={18} color={colors.gold} />}
-            title={Platform.OS === 'ios' ? 'Open iOS Settings' : 'Open App Settings'}
-            subtitle="Manage camera, notifications, and alarm permissions"
+            title={Platform.OS === 'ios' ? t('settings.openIOSSettings') : t('settings.openAppSettings')}
+            subtitle={t('settings.permissionsSubtitle')}
             onPress={() => Linking.openSettings()}
           />
         </View>
 
-        <SectionLabel label="About" />
+        <SectionLabel label={t('settings.aboutSection')} />
         <View style={styles.card}>
           <View style={styles.aboutRow}>
             <Text style={styles.aboutTitle}>Salio</Text>
-            <Text style={styles.aboutVersion}>Version 1.0.0</Text>
+            <Text style={styles.aboutVersion}>{t('settings.version', { version: '1.0.0' })}</Text>
           </View>
-          <Text style={styles.aboutNote}>
-            Salio keeps a quiet background sound running so your alarm can ring even from a locked
-            screen. If the app is force-quit from the app switcher, or the phone restarts and the
-            app is never reopened, alarms scheduled after that point won't ring — this is a
-            limitation of iOS itself, the same one every alarm app that doesn't rely on Apple's
-            built-in alerts runs into.
-          </Text>
+          <Text style={styles.aboutNote}>{t('settings.aboutNote')}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

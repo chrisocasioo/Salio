@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { t } from '../../i18n';
 import { colors, fonts } from '../../theme/theme';
 import type { Alarm } from '../../types/alarm';
 import { formatTimeParts } from '../../utils/time';
@@ -15,7 +16,7 @@ export function AlarmRingingScreen({ alarm, onDismiss }: { alarm: Alarm; onDismi
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <Text style={styles.eyebrow}>Alarm</Text>
+      <Text style={styles.eyebrow}>{t('alarmRinging.eyebrow')}</Text>
 
       <View style={styles.center}>
         <View style={styles.timeRow}>
@@ -28,7 +29,7 @@ export function AlarmRingingScreen({ alarm, onDismiss }: { alarm: Alarm; onDismi
 
       <View style={styles.actions}>
         <Pressable onPress={onDismiss} style={styles.pillButton}>
-          <Text style={styles.pillButtonText}>Dismiss</Text>
+          <Text style={styles.pillButtonText}>{t('alarmRinging.dismiss')}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

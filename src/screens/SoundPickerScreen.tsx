@@ -6,13 +6,14 @@ import { GoldButton } from '../components/GoldButton';
 import { Header } from '../components/Header';
 import { CheckIcon, SoundWaveIcon } from '../components/icons';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
+import { t } from '../i18n';
 import type { EditorStackParamList } from '../navigation/types';
 import { colors } from '../theme/theme';
 import type { AlarmSound } from '../../modules/uppy-alarm-android';
 
 type Props = NativeStackScreenProps<EditorStackParamList, 'SoundPicker'>;
 
-const DEFAULT_SOUND: AlarmSound = { uri: '', name: 'Default' };
+const DEFAULT_SOUND: AlarmSound = { uri: '', name: t('addEditAlarm.soundDefault') };
 
 export function SoundPickerScreen({ navigation }: Props) {
   const { draft, updateDraft } = useAlarmDraft();
@@ -33,7 +34,7 @@ export function SoundPickerScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <Header title="Sound" onBack={() => navigation.goBack()} />
+      <Header title={t('addEditAlarm.sound')} onBack={() => navigation.goBack()} />
       <FlatList
         data={sounds}
         keyExtractor={(s) => s.uri || 'default'}
@@ -57,7 +58,7 @@ export function SoundPickerScreen({ navigation }: Props) {
         }}
       />
       <View style={styles.footer}>
-        <GoldButton label="Done" onPress={() => navigation.goBack()} />
+        <GoldButton label={t('common.done')} onPress={() => navigation.goBack()} />
       </View>
     </SafeAreaView>
   );

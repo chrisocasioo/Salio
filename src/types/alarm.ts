@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday
 
 export type Repeat = 'once' | { days: Set<DayOfWeek> };
@@ -28,13 +30,13 @@ export type EmergencyEscapeState = {
 };
 
 export const DAY_LABELS: Record<DayOfWeek, string> = {
-  0: 'Sun',
-  1: 'Mon',
-  2: 'Tue',
-  3: 'Wed',
-  4: 'Thu',
-  5: 'Fri',
-  6: 'Sat',
+  0: t('days.sun'),
+  1: t('days.mon'),
+  2: t('days.tue'),
+  3: t('days.wed'),
+  4: t('days.thu'),
+  5: t('days.fri'),
+  6: t('days.sat'),
 };
 
 export function createBlankAlarm(): Alarm {
@@ -54,14 +56,14 @@ export function createBlankAlarm(): Alarm {
 }
 
 export function repeatSummary(repeat: Repeat): string {
-  if (repeat === 'once') return 'Once';
+  if (repeat === 'once') return t('repeat.once');
   const days = repeat.days;
-  if (days.size === 0) return 'Once';
-  if (days.size === 7) return 'Every day';
+  if (days.size === 0) return t('repeat.once');
+  if (days.size === 7) return t('repeat.everyDay');
   const weekdays: DayOfWeek[] = [1, 2, 3, 4, 5];
   const weekend: DayOfWeek[] = [0, 6];
-  if (weekdays.every((d) => days.has(d)) && days.size === 5) return 'Mon–Fri';
-  if (weekend.every((d) => days.has(d)) && days.size === 2) return 'Sat, Sun';
+  if (weekdays.every((d) => days.has(d)) && days.size === 5) return t('repeat.weekdays');
+  if (weekend.every((d) => days.has(d)) && days.size === 2) return t('repeat.weekend');
   const order: DayOfWeek[] = [0, 1, 2, 3, 4, 5, 6];
   return order
     .filter((d) => days.has(d))
@@ -72,10 +74,10 @@ export function repeatSummary(repeat: Repeat): string {
 export function missionLabel(mission: DismissMission): string {
   switch (mission) {
     case 'random_object':
-      return 'Random Object';
+      return t('mission.randomObject');
     case 'custom_object':
-      return 'Custom Object';
+      return t('mission.customObject');
     default:
-      return 'None';
+      return t('mission.none');
   }
 }

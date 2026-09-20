@@ -4,6 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlarmClockIcon, GearIcon, PlusIcon, TargetIcon } from '../components/icons';
+import { t } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 import { listAlarms, setAlarmEnabled } from '../services/alarmRepository';
 import { colors, fonts } from '../theme/theme';
@@ -31,7 +32,7 @@ export function AlarmListScreen({ navigation }: Props) {
     setAlarms((prev) => prev.map((a) => (a.id === alarm.id ? { ...a, enabled: enabling } : a)));
     const schedulingError = await setAlarmEnabled(alarm, enabling);
     if (schedulingError) {
-      Alert.alert('Alarm may not ring', schedulingError);
+      Alert.alert(t('alarmList.mayNotRingTitle'), schedulingError);
     }
   };
 
@@ -42,12 +43,12 @@ export function AlarmListScreen({ navigation }: Props) {
           <View style={styles.logoBadge}>
             <AlarmClockIcon size={18} color={colors.gold} />
           </View>
-          <Text style={styles.headerTitle}>Alarms</Text>
+          <Text style={styles.headerTitle}>{t('alarmList.title')}</Text>
         </View>
         <View style={styles.headerRight}>
           <Pressable
             onPress={() => navigation.navigate('Settings')}
-            accessibilityLabel="Settings"
+            accessibilityLabel={t('alarmList.settingsLabel')}
             accessibilityRole="button"
             style={styles.settingsButton}
           >
@@ -55,7 +56,7 @@ export function AlarmListScreen({ navigation }: Props) {
           </Pressable>
           <Pressable
             onPress={() => navigation.navigate('Editor', {})}
-            accessibilityLabel="Add alarm"
+            accessibilityLabel={t('alarmList.addLabel')}
             accessibilityRole="button"
             style={styles.addButton}
           >
@@ -70,7 +71,7 @@ export function AlarmListScreen({ navigation }: Props) {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No alarms yet. Tap + to add one.</Text>
+            <Text style={styles.emptyText}>{t('alarmList.emptyText')}</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -86,9 +87,9 @@ function AlarmRow({ alarm, onPress, onToggle }: { alarm: Alarm; onPress: () => v
   const hasMission = alarm.dismissMission !== 'none';
   const missionChipLabel =
     alarm.dismissMission === 'custom_object'
-      ? alarm.customObject?.name || 'Custom Object'
+      ? alarm.customObject?.name || t('mission.customObject')
       : alarm.dismissMission === 'random_object'
-      ? 'Random Object'
+      ? t('mission.randomObject')
       : '';
 
   return (

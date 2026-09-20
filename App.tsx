@@ -9,7 +9,9 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { getSetting, setSetting } from './src/db/database';
+import { t } from './src/i18n';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AlarmRingingRoot } from './src/screens/ringing/AlarmRingingRoot';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -27,6 +29,7 @@ export default function App() {
   });
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [ringingAlarmId, setRingingAlarmId] = useState<string | null>(null);
+  const [navKey, setNavKey] = useState(0);
 
   useEffect(() => {
     getSetting(ONBOARDING_SETTING_KEY).then((value) => setNeedsOnboarding(value !== 'true'));
@@ -81,9 +84,15 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
+      <ErrorBoundary
+        title={t('errorBoundary.genericTitle')}
+        actionLabel={t('errorBoundary.genericAction')}
+        onAction={() => setNavKey((k) => k + 1)}
+      >
+        <NavigationContainer key={navKey}>
+          <RootNavigator />
+        </NavigationContainer>
+      </ErrorBoundary>
       <StatusBar style="light" />
     </SafeAreaProvider>
   );

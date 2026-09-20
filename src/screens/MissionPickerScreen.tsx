@@ -6,6 +6,7 @@ import { GoldButton } from '../components/GoldButton';
 import { Header } from '../components/Header';
 import { BoltIcon, CircleIcon, GridIcon, TargetIcon } from '../components/icons';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
+import { t } from '../i18n';
 import type { EditorStackParamList } from '../navigation/types';
 import { RANDOM_OBJECT_LABELS } from './RandomObjectSetupScreen';
 import { colors, radii } from '../theme/theme';
@@ -16,20 +17,20 @@ type Props = NativeStackScreenProps<EditorStackParamList, 'MissionPicker'>;
 const OPTIONS: { key: DismissMission; title: string; description: string; icon: (color: string) => React.ReactNode }[] = [
   {
     key: 'none',
-    title: 'None',
-    description: 'Tap once to dismiss.',
+    title: t('mission.none'),
+    description: t('missionPicker.optionNoneDescription'),
     icon: (color) => <CircleIcon size={20} color={color} />,
   },
   {
     key: 'random_object',
-    title: 'Random Object',
-    description: 'Photograph an item from a pool you choose.',
+    title: t('mission.randomObject'),
+    description: t('missionPicker.optionRandomDescription'),
     icon: (color) => <GridIcon size={20} color={color} />,
   },
   {
     key: 'custom_object',
-    title: 'Custom Object',
-    description: 'Register one object to find each time.',
+    title: t('mission.customObject'),
+    description: t('missionPicker.optionCustomDescription'),
     icon: (color) => <TargetIcon size={20} color={color} />,
   },
 ];
@@ -61,11 +62,11 @@ export function MissionPickerScreen({ navigation }: Props) {
 
     if (leavingConfiguredCustomObject) {
       Alert.alert(
-        'Change dismiss mission?',
-        `You'll need to set up "${draft.customObject?.name}" again if you switch back to Custom Object later.`,
+        t('missionPicker.changeMissionTitle'),
+        t('missionPicker.changeMissionMessage', { name: draft.customObject?.name ?? '' }),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Change Mission', style: 'destructive', onPress: commitSave },
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('missionPicker.changeMissionConfirm'), style: 'destructive', onPress: commitSave },
         ]
       );
       return;
@@ -76,7 +77,7 @@ export function MissionPickerScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <Header title="Dismiss Mission" onBack={() => navigation.goBack()} />
+      <Header title={t('missionPicker.title')} onBack={() => navigation.goBack()} />
       <View style={styles.list}>
         {OPTIONS.map((opt) => {
           const isSelected = selected === opt.key;
@@ -104,12 +105,12 @@ export function MissionPickerScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.footer}>
-        <GoldButton label="Save" onPress={handleSave} />
+        <GoldButton label={t('missionPicker.save')} onPress={handleSave} />
       </View>
 
       <View style={styles.notice}>
         <BoltIcon />
-        <Text style={styles.noticeText}>Once a mission starts, only Emergency Escape can skip it.</Text>
+        <Text style={styles.noticeText}>{t('missionPicker.notice')}</Text>
       </View>
     </SafeAreaView>
   );

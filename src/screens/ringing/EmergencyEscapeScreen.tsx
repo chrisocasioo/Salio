@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckIcon } from '../../components/icons';
+import { t } from '../../i18n';
 import { getRequiredTaps, recordEscapeUsed } from '../../services/emergencyEscape';
 import { colors, fonts, radii } from '../../theme/theme';
 
@@ -47,12 +48,12 @@ export function EmergencyEscapeScreen({ onDismiss }: { onDismiss: () => void }) 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Emergency Mode</Text>
+        <Text style={styles.headerTitle}>{t('emergencyEscape.title')}</Text>
       </View>
 
       <View style={styles.counterBlock}>
         <Text style={styles.counter}>{remaining}</Text>
-        <Text style={styles.counterLabel}>taps left</Text>
+        <Text style={styles.counterLabel}>{t('emergencyEscape.tapsLeft')}</Text>
       </View>
 
       <View style={styles.progressTrack}>
@@ -65,23 +66,23 @@ export function EmergencyEscapeScreen({ onDismiss }: { onDismiss: () => void }) 
             <View style={styles.doneBadge}>
               <CheckIcon size={26} color={colors.gold} strokeWidth={3} />
             </View>
-            <Text style={styles.doneTitle}>Alarm dismissed</Text>
+            <Text style={styles.doneTitle}>{t('emergencyEscape.alarmDismissed')}</Text>
             <Pressable onPress={onDismiss} style={styles.doneButton}>
-              <Text style={styles.doneButtonText}>Back to Alarms</Text>
+              <Text style={styles.doneButtonText}>{t('emergencyEscape.backToAlarms')}</Text>
             </Pressable>
           </View>
         ) : (
           <Pressable
             onPress={tap}
-            accessibilityLabel="Tap"
+            accessibilityLabel={t('emergencyEscape.tapButton')}
             style={[styles.tapButton, { left: `${position.x}%`, top: `${position.y}%` }]}
           >
-            <Text style={styles.tapButtonText}>TAP</Text>
+            <Text style={styles.tapButtonText}>{t('emergencyEscape.tapButton')}</Text>
           </Pressable>
         )}
       </View>
 
-      <Text style={styles.footerNote}>Next use will need {requiredTaps + 100} taps.</Text>
+      <Text style={styles.footerNote}>{t('emergencyEscape.nextUseWillNeed', { count: requiredTaps + 100 })}</Text>
     </SafeAreaView>
   );
 }

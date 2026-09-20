@@ -6,6 +6,8 @@ import {
 } from '@expo-google-fonts/eb-garamond';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { t } from '../../i18n';
 import { getAlarm } from '../../services/alarmRepository';
 import { dismissRingingAlarm } from '../../services/alarmScheduler';
 import { colors } from '../../theme/theme';
@@ -68,32 +70,42 @@ export function AlarmRingingRoot({ alarmId, onDismissed }: AlarmRingingRootProps
     );
   }
 
+  let content: React.ReactNode;
   if (screen === 'emergencyEscape') {
-    return <EmergencyEscapeScreen onDismiss={handleDismiss} />;
-  }
-
-  if (screen === 'missionCapture') {
-    return (
+    content = <EmergencyEscapeScreen onDismiss={handleDismiss} />;
+  } else if (screen === 'missionCapture') {
+    content = (
       <MissionCaptureScreen
         mission={alarm.dismissMission}
         targetKey={missionTarget?.key ?? ''}
-        targetLabel={missionTarget?.label ?? 'the object'}
+        targetLabel={missionTarget?.label ?? t('alarmRinging.defaultTarget')}
         customObject={alarm.customObject}
         onSuccess={handleDismiss}
         onEmergencyEscape={() => setScreen('emergencyEscape')}
       />
     );
-  }
-
-  if (alarm.dismissMission !== 'none' && missionTarget) {
-    return (
+  } else if (alarm.dismissMission !== 'none' && missionTarget) {
+    content = (
       <AlarmRingingMissionScreen
         alarm={alarm}
         targetLabel={missionTarget.label}
         onStartMission={() => setScreen('missionCapture')}
       />
     );
+  } else {
+    content = <AlarmRingingScreen alarm={alarm} onDismiss={handleDismiss} />;
   }
 
-  return <AlarmRingingScreen alarm={alarm} onDismiss={handleDismiss} />;
+  // A crash anywhere in the mission/emergency-escape flow (a bad photo, a native module error,
+  // ...) must never leave someone stuck with a ringing alarm and no working UI — the fallback
+  // button dismisses the alarm directly, independent of whatever broke.
+  return (
+    <ErrorBoundary
+      title={t('errorBoundary.ringingTitle')}
+      actionLabel={t('errorBoundary.ringingAction')}
+      onAction={handleDismiss}
+    >
+      {content}
+    </ErrorBoundary>
+  );
 }

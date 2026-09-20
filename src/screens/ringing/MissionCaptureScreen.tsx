@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraIcon } from '../../components/icons';
+import { t } from '../../i18n';
 import { matchesCustomObject } from '../../services/customObjectMatch';
 import { labelImage, matchesTarget } from '../../services/imageLabeling';
 import { colors } from '../../theme/theme';
@@ -48,18 +49,18 @@ export function MissionCaptureScreen({
     try {
       const photo = await cameraRef.current?.takePictureAsync({ quality: 0.5 });
       if (!photo?.uri) {
-        setBanner({ text: 'Could not take photo — try again', tone: 'retry' });
+        setBanner({ text: t('alarmRinging.couldNotTakePhoto'), tone: 'retry' });
         return;
       }
       const matched = await checkPhoto(photo.uri);
       if (matched) {
-        setBanner({ text: 'Match found — dismissing…', tone: 'success' });
+        setBanner({ text: t('alarmRinging.matchFoundDismissing'), tone: 'success' });
         setTimeout(onSuccess, 900);
       } else {
-        setBanner({ text: 'Not quite — try again', tone: 'retry' });
+        setBanner({ text: t('alarmRinging.notQuiteTryAgain'), tone: 'retry' });
       }
     } catch {
-      setBanner({ text: 'Something went wrong — try again', tone: 'retry' });
+      setBanner({ text: t('alarmRinging.somethingWentWrongTryAgain'), tone: 'retry' });
     } finally {
       setBusy(false);
     }
@@ -70,10 +71,10 @@ export function MissionCaptureScreen({
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <CameraIcon size={16} color={colors.goldLight} />
-          <Text style={styles.headerLabel}>Find: {targetLabel}</Text>
+          <Text style={styles.headerLabel}>{t('alarmRinging.find', { target: targetLabel })}</Text>
         </View>
         <Pressable onPress={onEmergencyEscape}>
-          <Text style={styles.emergency}>Emergency</Text>
+          <Text style={styles.emergency}>{t('alarmRinging.emergency')}</Text>
         </Pressable>
       </View>
 
@@ -103,7 +104,7 @@ export function MissionCaptureScreen({
       </View>
 
       <View style={styles.footer}>
-        <Pressable onPress={shoot} style={styles.shutter} accessibilityLabel="Take photo" disabled={busy}>
+        <Pressable onPress={shoot} style={styles.shutter} accessibilityLabel={t('common.takePhoto')} disabled={busy}>
           <View style={styles.shutterInner} />
         </Pressable>
       </View>

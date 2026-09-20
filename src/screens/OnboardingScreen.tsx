@@ -4,6 +4,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlarmClockIcon, CameraIcon, CheckIcon } from '../components/icons';
 import { GoldButton } from '../components/GoldButton';
+import { t } from '../i18n';
 import {
   canScheduleExactAlarms,
   isIgnoringBatteryOptimizations,
@@ -42,34 +43,29 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         <View style={styles.logoBadge}>
           <AlarmClockIcon size={26} color={colors.gold} />
         </View>
-        <Text style={styles.title}>Welcome to Salio</Text>
-        <Text style={styles.subtitle}>
-          A few permissions so your alarms ring reliably, even through silent mode and a locked
-          screen.
-        </Text>
+        <Text style={styles.title}>{t('onboarding.title')}</Text>
+        <Text style={styles.subtitle}>{t('onboarding.subtitle')}</Text>
 
         <PermissionRow
-          title="Alarms"
+          title={t('onboarding.alarmsTitle')}
           description={
-            isAndroid
-              ? 'Lets Salio schedule exact alarms that ring on time.'
-              : 'Lets Salio notify you when an alarm rings.'
+            isAndroid ? t('onboarding.alarmsDescriptionAndroid') : t('onboarding.alarmsDescriptionIOS')
           }
           granted={alarmsGranted}
           onPress={handleAlarms}
         />
 
         <PermissionRow
-          title="Camera"
-          description="Only used to check a dismiss-mission photo — never uploaded anywhere."
+          title={t('onboarding.cameraTitle')}
+          description={t('onboarding.cameraDescription')}
           granted={cameraPermission?.granted ?? false}
           onPress={() => requestCameraPermission()}
         />
 
         {isAndroid && (
           <PermissionRow
-            title="Notifications"
-            description="Needed to show the full-screen alarm when it rings."
+            title={t('onboarding.notificationsTitle')}
+            description={t('onboarding.notificationsDescription')}
             granted={notificationsGranted}
             onPress={handleNotifications}
           />
@@ -77,8 +73,8 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
 
         {isAndroid && androidSdkInt >= ANDROID_EXACT_ALARM_MIN_SDK && (
           <PermissionRow
-            title="Exact alarms"
-            description="Android requires this separately so alarms aren't delayed."
+            title={t('onboarding.exactAlarmsTitle')}
+            description={t('onboarding.exactAlarmsDescription')}
             granted={exactAlarmGranted}
             onPress={() => {
               openExactAlarmSettings();
@@ -89,8 +85,8 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
 
         {isAndroid && (
           <PermissionRow
-            title="Battery optimization"
-            description="Exempts Salio so the system doesn't stop it from ringing on time."
+            title={t('onboarding.batteryTitle')}
+            description={t('onboarding.batteryDescription')}
             granted={batteryGranted}
             onPress={() => {
               requestIgnoreBatteryOptimizations();
@@ -102,7 +98,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <GoldButton label="Continue" onPress={onDone} />
+        <GoldButton label={t('onboarding.continueButton')} onPress={onDone} />
       </View>
     </SafeAreaView>
   );
@@ -133,7 +129,7 @@ function PermissionRow({
         disabled={granted}
         style={[styles.rowButton, granted && styles.rowButtonGranted]}
       >
-        {granted ? <CheckIcon size={16} color={colors.gold} /> : <Text style={styles.rowButtonText}>Allow</Text>}
+        {granted ? <CheckIcon size={16} color={colors.gold} /> : <Text style={styles.rowButtonText}>{t('onboarding.allow')}</Text>}
       </Pressable>
     </View>
   );

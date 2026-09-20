@@ -6,6 +6,7 @@ import { GoldButton } from '../components/GoldButton';
 import { Header } from '../components/Header';
 import { CheckIcon } from '../components/icons';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
+import { t } from '../i18n';
 import type { EditorStackParamList } from '../navigation/types';
 import { colors } from '../theme/theme';
 
@@ -14,23 +15,25 @@ type Props = NativeStackScreenProps<EditorStackParamList, 'RandomObjectSetup'>;
 // ML Kit's bundled base image-labeling model covers roughly 25-30 genuinely
 // usable household items (see build brief Stage 4 note). Full label set is
 // wired against the real ML Kit label list in Stage 4; this is the initial pool.
+// `key` stays a fixed English identifier (matched against ML Kit's own labels);
+// only `name` (the displayed text) is localized.
 export const RANDOM_OBJECT_LABELS: { key: string; name: string }[] = [
-  { key: 'sink', name: 'Sink' },
-  { key: 'chair', name: 'Chair' },
-  { key: 'couch', name: 'Couch' },
-  { key: 'pillow', name: 'Pillow' },
-  { key: 'clock', name: 'Clock' },
-  { key: 'television', name: 'Television' },
-  { key: 'cup', name: 'Cup' },
-  { key: 'shoe', name: 'Shoe' },
-  { key: 'plant', name: 'Plant' },
-  { key: 'bag', name: 'Bag' },
-  { key: 'shelf', name: 'Shelf' },
-  { key: 'drawer', name: 'Drawer' },
-  { key: 'countertop', name: 'Countertop' },
-  { key: 'lampshade', name: 'Lampshade' },
-  { key: 'curtain', name: 'Curtain' },
-  { key: 'umbrella', name: 'Umbrella' },
+  { key: 'sink', name: t('randomObjectSetup.items.sink') },
+  { key: 'chair', name: t('randomObjectSetup.items.chair') },
+  { key: 'couch', name: t('randomObjectSetup.items.couch') },
+  { key: 'pillow', name: t('randomObjectSetup.items.pillow') },
+  { key: 'clock', name: t('randomObjectSetup.items.clock') },
+  { key: 'television', name: t('randomObjectSetup.items.television') },
+  { key: 'cup', name: t('randomObjectSetup.items.cup') },
+  { key: 'shoe', name: t('randomObjectSetup.items.shoe') },
+  { key: 'plant', name: t('randomObjectSetup.items.plant') },
+  { key: 'bag', name: t('randomObjectSetup.items.bag') },
+  { key: 'shelf', name: t('randomObjectSetup.items.shelf') },
+  { key: 'drawer', name: t('randomObjectSetup.items.drawer') },
+  { key: 'countertop', name: t('randomObjectSetup.items.countertop') },
+  { key: 'lampshade', name: t('randomObjectSetup.items.lampshade') },
+  { key: 'curtain', name: t('randomObjectSetup.items.curtain') },
+  { key: 'umbrella', name: t('randomObjectSetup.items.umbrella') },
 ];
 
 export function RandomObjectSetupScreen({ navigation }: Props) {
@@ -46,9 +49,9 @@ export function RandomObjectSetupScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <Header title="Random Object Pool" onBack={() => navigation.goBack()} />
+      <Header title={t('common.randomObjectPool')} onBack={() => navigation.goBack()} />
       <Text style={styles.subtitle}>
-        {pool.size} of {RANDOM_OBJECT_LABELS.length} selected · we'll pick one at random when this alarm rings.
+        {t('randomObjectSetup.subtitle', { count: pool.size, total: RANDOM_OBJECT_LABELS.length })}
       </Text>
       <FlatList
         data={RANDOM_OBJECT_LABELS}
@@ -72,7 +75,7 @@ export function RandomObjectSetupScreen({ navigation }: Props) {
         }}
       />
       <View style={styles.footer}>
-        <GoldButton label="Done" onPress={() => navigation.goBack()} />
+        <GoldButton label={t('common.done')} onPress={() => navigation.goBack()} />
       </View>
     </SafeAreaView>
   );
