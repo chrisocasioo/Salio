@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoldButton } from '../components/GoldButton';
 import { Header } from '../components/Header';
@@ -38,7 +38,7 @@ export function MissionPickerScreen({ navigation }: Props) {
   const { draft, updateDraft } = useAlarmDraft();
   const [selected, setSelected] = useState<DismissMission>(draft.dismissMission);
 
-  const handleSave = () => {
+  const commitSave = () => {
     // The first time an alarm switches to Random Object, start with every item in the pool
     // selected (rather than none) — matches the pool screen's own copy ("we'll pick one at
     // random"), and an empty pool would otherwise leave the mission impossible to complete.
@@ -46,8 +46,32 @@ export function MissionPickerScreen({ navigation }: Props) {
       selected === 'random_object' && draft.randomObjectPool.length === 0
         ? RANDOM_OBJECT_LABELS.map((o) => o.key)
         : draft.randomObjectPool;
-    updateDraft({ dismissMission: selected, randomObjectPool });
+    // Switching away from a Custom Object mission that already has a registered object leaves
+    // that registration orphaned (Add/Edit Alarm only shows the Custom Object row while this
+    // mission is selected) — clear it so a later switch back to Custom Object is really a fresh
+    // setup, matching what the warning below tells the user will happen.
+    const customObject = selected === 'custom_object' ? draft.customObject : null;
+    updateDraft({ dismissMission: selected, randomObjectPool, customObject });
     navigation.goBack();
+  };
+
+  const handleSave = () => {
+    const leavingConfiguredCustomObject =
+      draft.dismissMission === 'custom_object' && draft.customObject !== null && selected !== 'custom_object';
+
+    if (leavingConfiguredCustomObject) {
+      Alert.alert(
+        'Change dismiss mission?',
+        `You'll need to set up "${draft.customObject?.name}" again if you switch back to Custom Object later.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Change Mission', style: 'destructive', onPress: commitSave },
+        ]
+      );
+      return;
+    }
+
+    commitSave();
   };
 
   return (
