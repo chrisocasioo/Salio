@@ -19,4 +19,8 @@ android {
 
 dependencies {
   implementation "androidx.core:core-ktx:1.13.1"
+  // expo-modules-core depends on this too, but only via `implementation`, so it isn't visible
+  // transitively — AlarmRingingActivity subclasses com.facebook.react.ReactActivity directly and
+  // needs its own reference to resolve ReactActivity/ReactActivityDelegate at compile time.
+  implementation "com.facebook.react:react-android"
 }

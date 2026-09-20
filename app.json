@@ -9,17 +9,20 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#15120D",
     "ios": {
-      "bundleIdentifier": "com.uppy.alarm",
+      "bundleIdentifier": "com.santrico.uppy",
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "Uppy needs your camera to verify the object for a dismiss mission.",
         "NSAlarmKitUsageDescription": "Uppy uses AlarmKit to ring your alarms reliably through silent mode and the lock screen.",
-        "UIBackgroundModes": ["audio"],
-        "NSSupportsLiveActivities": true
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "NSSupportsLiveActivities": true,
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.uppy.alarm",
+      "package": "com.santrico.uppy",
       "adaptiveIcon": {
         "backgroundColor": "#15120D",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -37,10 +40,15 @@
         "android.permission.VIBRATE",
         "android.permission.CAMERA",
         "android.permission.POST_NOTIFICATIONS",
-        "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
-      ]
+        "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "versionCode": 2
     },
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "plugins": [
       "expo-sqlite",
       "expo-localization",
@@ -62,6 +70,12 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c702bc76-dbec-43c2-9ac6-a2919ed8be49"
+      }
+    },
+    "owner": "santrico"
   }
 }
