@@ -43,7 +43,7 @@
         "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
         "android.permission.RECORD_AUDIO"
       ],
-      "versionCode": 2
+      "versionCode": 3
     },
     "platforms": [
       "ios",
