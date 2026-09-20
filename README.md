@@ -141,7 +141,12 @@ the real thing, not just documentation. See its own README for details.
       always-match stub. Every MediaPipe API call on both platforms was
       checked against the real compiled classes/headers (see
       `modules/uppy-object-embedder/README.md`), not just docs.
-- [ ] **Stage 6** — Emergency Escape (100/+100/30-day-reset tap bypass).
+- [x] **Stage 6** — Emergency Escape: the moving tap target, live counter,
+      and progress bar from the design mock, wired as the only bypass out
+      of an active mission (from MissionCaptureScreen's "Emergency" link).
+      `src/services/emergencyEscape.ts` holds the 100/+100/30-day-reset
+      logic against the sqlite-backed `EmergencyEscapeState` from Stage 0.
+      Pure JS/TS — nothing native needed for this stage.
 - [ ] **Stage 7** — Polish: permission copy, first-run flow, real-device
       checklist.
 
