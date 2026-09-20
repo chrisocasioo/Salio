@@ -3,7 +3,7 @@ import React from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
-import { ChevronRightIcon, GearIcon, LifeBuoyIcon, MailIcon, ShieldIcon } from '../components/icons';
+import { ChevronRightIcon, FileTextIcon, GearIcon, LifeBuoyIcon, MailIcon, ShieldIcon } from '../components/icons';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, fonts, radii } from '../theme/theme';
 
@@ -11,6 +11,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 const PRIVACY_URL = 'https://chrisocasioo.github.io/Uppy-Legal/privacy.html';
 const SUPPORT_URL = 'https://chrisocasioo.github.io/Uppy-Legal/support.html';
+const TERMS_URL = 'https://chrisocasioo.github.io/Uppy-Legal/terms.html';
 const SUPPORT_EMAIL = 'Santrico.support@gmail.com';
 
 async function openLink(url: string) {
@@ -49,6 +50,12 @@ export function SettingsScreen({ navigation }: Props) {
             icon={<ShieldIcon size={18} color={colors.gold} />}
             title="Privacy Policy"
             onPress={() => openLink(PRIVACY_URL)}
+          />
+          <Divider />
+          <Row
+            icon={<FileTextIcon size={18} color={colors.gold} />}
+            title="Terms of Use"
+            onPress={() => openLink(TERMS_URL)}
           />
         </View>
 
