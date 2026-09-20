@@ -1,7 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoldButton } from '../components/GoldButton';
 import { Header } from '../components/Header';
@@ -106,10 +106,20 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
 
         <View style={styles.slots}>
           {[1, 2, 3].map((n) => {
-            const filled = n <= photoUris.length;
+            const uri = photoUris[n - 1];
+            if (uri) {
+              return (
+                <View key={n} style={styles.slotFilled}>
+                  <Image source={{ uri }} style={styles.slotImage} />
+                  <View style={styles.slotBadge}>
+                    <CheckIcon size={12} color={colors.bg} strokeWidth={4} />
+                  </View>
+                </View>
+              );
+            }
             return (
-              <View key={n} style={[styles.slot, filled ? styles.slotFilled : styles.slotEmpty]}>
-                {filled ? <CheckIcon size={20} color={colors.bg} strokeWidth={3} /> : <Text style={styles.slotNumber}>{n}</Text>}
+              <View key={n} style={[styles.slot, styles.slotEmpty]}>
+                <Text style={styles.slotNumber}>{n}</Text>
               </View>
             );
           })}
@@ -229,7 +239,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   slotFilled: {
+    width: 64,
+    height: 64,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: colors.surface2,
+  },
+  slotImage: {
+    width: '100%',
+    height: '100%',
+  },
+  slotBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   slotEmpty: {
     borderWidth: 1.5,
