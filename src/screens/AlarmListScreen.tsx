@@ -4,8 +4,8 @@ import React, { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlarmClockIcon, PlusIcon, TargetIcon } from '../components/icons';
-import { listAlarms, setAlarmEnabled } from '../db/database';
 import type { RootStackParamList } from '../navigation/types';
+import { listAlarms, setAlarmEnabled } from '../services/alarmRepository';
 import { colors, fonts } from '../theme/theme';
 import type { Alarm } from '../types/alarm';
 import { repeatSummary } from '../types/alarm';
@@ -28,7 +28,7 @@ export function AlarmListScreen({ navigation }: Props) {
 
   const toggle = async (alarm: Alarm) => {
     setAlarms((prev) => prev.map((a) => (a.id === alarm.id ? { ...a, enabled: !a.enabled } : a)));
-    await setAlarmEnabled(alarm.id, !alarm.enabled);
+    await setAlarmEnabled(alarm, !alarm.enabled);
   };
 
   return (

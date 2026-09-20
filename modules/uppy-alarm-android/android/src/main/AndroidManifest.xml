@@ -1,0 +1,33 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <application>
+    <receiver
+      android:name=".AlarmTriggerReceiver"
+      android:exported="false" />
+
+    <receiver
+      android:name=".BootTimezoneReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+        <action android:name="android.intent.action.DATE_CHANGED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+      </intent-filter>
+    </receiver>
+
+    <service
+      android:name=".RingingService"
+      android:exported="false"
+      android:foregroundServiceType="mediaPlayback" />
+
+    <activity
+      android:name=".AlarmRingingActivity"
+      android:exported="false"
+      android:launchMode="singleInstance"
+      android:excludeFromRecents="true"
+      android:screenOrientation="portrait"
+      android:configChanges="orientation|screenSize|keyboardHidden" />
+  </application>
+
+</manifest>

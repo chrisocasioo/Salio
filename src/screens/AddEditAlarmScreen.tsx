@@ -1,4 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Crypto from 'expo-crypto';
 import React, { useMemo } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,8 +8,9 @@ import { Header } from '../components/Header';
 import { ChevronRightIcon } from '../components/icons';
 import { WheelPicker } from '../components/WheelPicker';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
-import { deleteAlarm, saveAlarm } from '../db/database';
 import type { EditorStackParamList } from '../navigation/types';
+import { deleteAlarm, saveAlarm } from '../services/alarmRepository';
+import { requestAlarmPermissions } from '../services/alarmScheduler';
 import { colors, fonts, radii } from '../theme/theme';
 import type { DayOfWeek } from '../types/alarm';
 import { DAY_LABELS, missionLabel } from '../types/alarm';
@@ -39,7 +41,8 @@ export function AddEditAlarmScreen({ navigation }: Props) {
   };
 
   const handleSave = async () => {
-    const toSave = draft.id ? draft : { ...draft, id: `alarm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` };
+    const toSave = draft.id ? draft : { ...draft, id: Crypto.randomUUID() };
+    await requestAlarmPermissions();
     await saveAlarm(toSave);
     navigation.getParent()?.goBack();
   };

@@ -3,7 +3,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { AlarmDraftProvider } from '../context/AlarmDraftContext';
-import { getAlarm } from '../db/database';
+import { getAlarm } from '../services/alarmRepository';
 import { AddEditAlarmScreen } from '../screens/AddEditAlarmScreen';
 import { CustomObjectSetupScreen } from '../screens/CustomObjectSetupScreen';
 import { MissionPickerScreen } from '../screens/MissionPickerScreen';

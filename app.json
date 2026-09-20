@@ -13,7 +13,9 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "Uppy needs your camera to verify the object for a dismiss mission.",
-        "UIBackgroundModes": ["audio"]
+        "NSAlarmKitUsageDescription": "Uppy uses AlarmKit to ring your alarms reliably through silent mode and the lock screen.",
+        "UIBackgroundModes": ["audio"],
+        "NSSupportsLiveActivities": true
       }
     },
     "android": {

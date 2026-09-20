@@ -52,9 +52,52 @@ src/
                choice on a sub-screen shows up immediately on return
   navigation/  RootNavigator (Alarm List, Editor) and the nested
                EditorNavigator stack for the alarm-editing flow
-  screens/     one file per screen
-  native/      iOS (Swift) and Android (Kotlin) native module sources
+  screens/     one file per screen; screens/ringing/ is the second,
+               ringing-only RN root Android's full-screen alarm Activity
+               boots into (see Native modules below)
+  services/    alarmRepository (sqlite + native scheduling) and
+               alarmScheduler (the Platform.OS-dispatched native calls)
+
+modules/
+  uppy-alarm-kit/      iOS-only Expo module wrapping AlarmKit
+  uppy-alarm-android/  Android-only Expo module: AlarmManager scheduling,
+                       the ringing foreground service, the full-screen
+                       ringing Activity, and boot/timezone receivers
 ```
+
+## Native modules
+
+Both are local Expo modules (autolinked from `modules/`, no separate npm
+package): `uppy-alarm-kit` (iOS) and `uppy-alarm-android` (Android). See
+each module's Kotlin/Swift sources for the implementation; the short version:
+
+- **Android** re-arms one AlarmManager occurrence at a time (self-rescheduling
+  on repeat, rather than the drifting/inexact `setRepeating`), and keeps a
+  lightweight duplicate of every enabled alarm's schedule in SharedPreferences
+  purely so `BootTimezoneReceiver` can re-arm everything after a reboot,
+  timezone change, or date change without needing the JS runtime or sqlite.
+  `RingingService` is a foreground service that holds the wake lock, plays
+  looping audio on the alarm stream, and posts the full-screen notification.
+  That notification's full-screen intent opens `AlarmRingingActivity`, a
+  second `ReactActivity` that shares the app's existing `ReactNativeHost` and
+  boots straight into a second RN root (`alarmRinging`, registered in
+  `index.ts`) instead of the normal app root — see
+  `src/screens/ringing/AlarmRingingRoot.tsx`.
+- **iOS** just wraps `AlarmManager`/`AlarmConfiguration`/`stopIntent`.
+  AlarmKit owns the entire ringing UI (lock screen alert, Live Activity,
+  Dynamic Island) per the build brief, so there's no custom ringing screen
+  to wire up on iOS — `src/screens/ringing/` only matters on Android.
+
+**`modules/uppy-alarm-kit`'s Swift is unverified against the real SDK.**
+AlarmKit is brand new (iOS 26) and this was written in a Linux sandbox with
+no Mac/Xcode toolchain to compile-check against — every AlarmKit type and
+initializer label (`Alarm.Schedule.Relative`'s shape,
+`AlarmPresentation.Alert`'s button parameters, `AlarmConfiguration`'s
+initializer, whether `stopIntent` wants a `LiveActivityIntent` or a plain
+`AppIntent`) was written from the AlarmKit WWDC session and public docs.
+Confirm each one against the real framework headers on first build on a
+Mac — see the comments at the top of `UppyAlarmKitModule.swift` and
+`UppyStopIntent.swift`.
 
 ## Build stages
 
@@ -64,8 +107,11 @@ src/
       repeat-day selection, local persistence, and the shared draft state
       across Add/Edit Alarm, Sound Picker, and Mission Picker. No real
       scheduling or ringing yet.
-- [ ] **Stage 2** — Native scheduling and ringing (AlarmKit / AlarmManager,
-      full-screen ringing UI, dismiss wiring). Needs a real device to verify.
+- [x] **Stage 2** — Native scheduling and ringing (AlarmKit / AlarmManager,
+      full-screen ringing UI, dismiss wiring). Code complete; **needs a real
+      device pass** (see Known limitations) — the "Done when" checkpoints
+      (rings through a locked/silenced phone on both platforms, survives
+      reboot + DST, `stopIntent` fires on every dismiss path) are unverified.
 - [ ] **Stage 3** — Sound: Android `RingtoneManager` picker; iOS static
       "Default" row.
 - [ ] **Stage 4** — Mission framework + Random Object (ML Kit image
