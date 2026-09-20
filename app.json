@@ -19,7 +19,8 @@
         ],
         "NSSupportsLiveActivities": true,
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.santrico.uppy",

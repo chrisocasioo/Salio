@@ -33,6 +33,9 @@ yarn-error.*
 # local env files
 .env*.local
 
+# EAS submission credentials (App Store Connect API key, distribution cert/profile)
+credentials.json
+
 # typescript
 *.tsbuildinfo
 
