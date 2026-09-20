@@ -21,27 +21,28 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
   const [name, setName] = useState(draft.customObject?.name ?? '');
   const [photoUris, setPhotoUris] = useState<string[]>([]);
   const [permission, requestPermission] = useCameraPermissions();
-  const [showCamera, setShowCamera] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
+  const atMax = photoUris.length >= MAX_PHOTOS;
   const canSave = name.trim().length > 0 && photoUris.length >= MIN_PHOTOS && !saving;
 
-  const openCamera = async () => {
-    if (photoUris.length >= MAX_PHOTOS) return;
-    if (!permission?.granted) {
-      const res = await requestPermission();
-      if (!res.granted) return;
-    }
-    setShowCamera(true);
-  };
-
   const capture = async () => {
-    const photo = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
-    if (photo?.uri) {
-      setPhotoUris((prev) => [...prev, photo.uri].slice(0, MAX_PHOTOS));
+    if (busy || atMax) return;
+    if (!permission?.granted) {
+      await requestPermission();
+      return;
     }
-    setShowCamera(false);
+    setBusy(true);
+    try {
+      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
+      if (photo?.uri) {
+        setPhotoUris((prev) => [...prev, photo.uri].slice(0, MAX_PHOTOS));
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleSave = async () => {
@@ -54,21 +55,6 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
       setSaving(false);
     }
   };
-
-  if (showCamera) {
-    return (
-      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-        <CameraView ref={cameraRef} style={styles.camera} facing="back">
-          <View style={styles.cameraOverlay}>
-            <Pressable onPress={capture} style={styles.shutter} accessibilityLabel="Capture photo" />
-            <Pressable onPress={() => setShowCamera(false)} style={styles.cancelCamera}>
-              <Text style={styles.cancelCameraText}>Cancel</Text>
-            </Pressable>
-          </View>
-        </CameraView>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -85,17 +71,38 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
           />
         </View>
 
-        <View style={styles.captureFrame}>
-          <CameraIcon size={34} color={colors.inkFaint} />
-          <Text style={styles.captureHint}>Center the object</Text>
-        </View>
+        <Pressable
+          style={styles.viewfinder}
+          onPress={!permission?.granted ? requestPermission : undefined}
+          disabled={permission?.granted}
+        >
+          {permission?.granted ? (
+            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+          ) : (
+            <>
+              <CameraIcon size={34} color={colors.inkFaint} />
+              <Text style={styles.captureHint}>Tap to enable the camera</Text>
+            </>
+          )}
+          <View pointerEvents="none" style={[styles.corner, styles.cornerTL]} />
+          <View pointerEvents="none" style={[styles.corner, styles.cornerTR]} />
+          <View pointerEvents="none" style={[styles.corner, styles.cornerBL]} />
+          <View pointerEvents="none" style={[styles.corner, styles.cornerBR]} />
+          {permission?.granted ? (
+            <Text pointerEvents="none" style={styles.centerHint}>
+              Center the object
+            </Text>
+          ) : null}
+        </Pressable>
 
         <Pressable
-          onPress={openCamera}
-          style={styles.shutterButton}
-          accessibilityLabel="Capture photo"
-          disabled={photoUris.length >= MAX_PHOTOS}
-        />
+          onPress={capture}
+          style={[styles.shutter, (atMax || busy) && styles.shutterDisabled]}
+          accessibilityLabel="Take photo"
+          disabled={atMax || busy}
+        >
+          <View style={styles.shutterInner} />
+        </Pressable>
 
         <View style={styles.slots}>
           {[1, 2, 3].map((n) => {
@@ -108,7 +115,11 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
           })}
         </View>
 
-        <Text style={styles.helperText}>Take at least 2 photos, in the lighting you'll use each morning.</Text>
+        <Text style={styles.helperText}>
+          {atMax
+            ? 'That’s enough — tap Save Object below.'
+            : 'Take at least 2 photos, in the lighting you’ll use each morning.'}
+        </Text>
 
         {saving ? (
           <ActivityIndicator color={colors.gold} />
@@ -150,31 +161,60 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 16,
   },
-  captureFrame: {
+  viewfinder: {
     alignSelf: 'center',
     width: 260,
     height: 260,
     borderRadius: radii.xxl,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
     backgroundColor: colors.surface2,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     gap: 10,
   },
   captureHint: {
     fontSize: 12,
     color: colors.inkFaint,
   },
-  shutterButton: {
+  centerHint: {
+    position: 'absolute',
+    bottom: 14,
+    fontSize: 12,
+    color: colors.inkFaint,
+    backgroundColor: 'rgba(21,18,13,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  corner: {
+    position: 'absolute',
+    width: 18,
+    height: 18,
+    borderColor: colors.gold,
+  },
+  cornerTL: { top: 14, left: 14, borderTopWidth: 2, borderLeftWidth: 2, borderRadius: 4 },
+  cornerTR: { top: 14, right: 14, borderTopWidth: 2, borderRightWidth: 2, borderRadius: 4 },
+  cornerBL: { bottom: 14, left: 14, borderBottomWidth: 2, borderLeftWidth: 2, borderRadius: 4 },
+  cornerBR: { bottom: 14, right: 14, borderBottomWidth: 2, borderRightWidth: 2, borderRadius: 4 },
+  shutter: {
     alignSelf: 'center',
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    backgroundColor: colors.gold,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.bg,
     borderWidth: 4,
-    borderColor: colors.goldSoft,
+    borderColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shutterDisabled: {
+    opacity: 0.4,
+  },
+  shutterInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.gold,
   },
   slots: {
     flexDirection: 'row',
@@ -205,30 +245,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.inkFaint,
     lineHeight: 18,
-  },
-  camera: {
-    flex: 1,
-  },
-  cameraOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 40,
-    gap: 16,
-  },
-  shutter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.gold,
-    borderWidth: 4,
-    borderColor: '#fff',
-  },
-  cancelCamera: {
-    padding: 10,
-  },
-  cancelCameraText: {
-    color: '#fff',
-    fontSize: 15,
   },
 });
