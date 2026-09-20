@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Wake Uppy",
+    "name": "Salio",
     "slug": "Uppy",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,7 @@
       "bundleIdentifier": "com.santrico.uppy",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "Wake Uppy needs your camera to verify the object for a dismiss mission.",
+        "NSCameraUsageDescription": "Salio needs your camera to verify the object for a dismiss mission.",
         "UIBackgroundModes": [
           "audio"
         ],
@@ -55,7 +55,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Wake Uppy needs your camera to verify the object for a dismiss mission."
+          "cameraPermission": "Salio needs your camera to verify the object for a dismiss mission."
         }
       ],
       [

@@ -42,7 +42,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         <View style={styles.logoBadge}>
           <AlarmClockIcon size={26} color={colors.gold} />
         </View>
-        <Text style={styles.title}>Welcome to Wake Uppy</Text>
+        <Text style={styles.title}>Welcome to Salio</Text>
         <Text style={styles.subtitle}>
           A few permissions so your alarms ring reliably, even through silent mode and a locked
           screen.
@@ -52,8 +52,8 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
           title="Alarms"
           description={
             isAndroid
-              ? 'Lets Wake Uppy schedule exact alarms that ring on time.'
-              : 'Lets Wake Uppy notify you when an alarm rings.'
+              ? 'Lets Salio schedule exact alarms that ring on time.'
+              : 'Lets Salio notify you when an alarm rings.'
           }
           granted={alarmsGranted}
           onPress={handleAlarms}
@@ -90,7 +90,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         {isAndroid && (
           <PermissionRow
             title="Battery optimization"
-            description="Exempts Wake Uppy so the system doesn't stop it from ringing on time."
+            description="Exempts Salio so the system doesn't stop it from ringing on time."
             granted={batteryGranted}
             onPress={() => {
               requestIgnoreBatteryOptimizations();
