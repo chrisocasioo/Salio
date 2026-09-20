@@ -1,6 +1,7 @@
 import ExpoModulesCore
 import AlarmKit
 import Foundation
+import UserNotifications
 
 /// Wraps AlarmKit's `AlarmManager` so JS can request authorization, and schedule/update/cancel
 /// alarms. AlarmKit owns the ringing UI on iOS (lock screen alert, Live Activity, Dynamic Island),
@@ -9,8 +10,11 @@ import Foundation
 /// not customizable or interceptable). For a mission alarm, `stopIntent` (UppyStopIntent) responds
 /// by re-arming a near-immediate follow-up alarm instead of truly stopping — see that file. The
 /// real stop only happens once the mission (or Emergency Escape) completes inside the app, reached
-/// via the alert's secondary "Dismiss Mission" button (`secondaryButtonBehavior: .custom`, which
-/// Apple documents as opening the app — see UppyOpenMissionIntent) and JS calling `stopRinging`.
+/// via the alert's secondary "Dismiss Mission" button. Apple's docs describe
+/// `secondaryButtonBehavior: .custom` as displaying "an action to launch the app", but confirmed
+/// on a real device that isn't automatic — like the primary button, its intent still only runs in
+/// the background, so UppyOpenMissionIntent instead posts a real local notification (tapping one
+/// is an OS-guaranteed way to foreground an app) and JS calls `stopRinging` once done.
 ///
 /// Verified against Apple's public AlarmKit documentation (developer.apple.com/documentation/
 /// alarmkit — fetched directly, not from memory): AlarmManager.AuthorizationState's three cases,
@@ -26,6 +30,10 @@ public class UppyAlarmKitModule: Module {
 
     AsyncFunction("requestAuthorization") { () -> String in
       let state = try await AlarmManager.shared.requestAuthorization()
+      // Also needed so UppyOpenMissionIntent's "tap to open" notification (its only reliable way
+      // to foreground the app — see that file) actually shows; best-effort, doesn't affect the
+      // alarm itself if denied, since AlarmKit's own alert always appears regardless.
+      UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
       return Self.authorizationStateName(state)
     }
 
