@@ -1,13 +1,14 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoldButton } from '../components/GoldButton';
 import { Header } from '../components/Header';
 import { CameraIcon, CheckIcon } from '../components/icons';
 import { useAlarmDraft } from '../context/AlarmDraftContext';
 import type { EditorStackParamList } from '../navigation/types';
+import { embedReferencePhotos } from '../services/customObjectMatch';
 import { colors, radii } from '../theme/theme';
 
 type Props = NativeStackScreenProps<EditorStackParamList, 'CustomObjectSetup'>;
@@ -21,9 +22,10 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
   const [photoUris, setPhotoUris] = useState<string[]>([]);
   const [permission, requestPermission] = useCameraPermissions();
   const [showCamera, setShowCamera] = useState(false);
+  const [saving, setSaving] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
-  const canSave = name.trim().length > 0 && photoUris.length >= MIN_PHOTOS;
+  const canSave = name.trim().length > 0 && photoUris.length >= MIN_PHOTOS && !saving;
 
   const openCamera = async () => {
     if (photoUris.length >= MAX_PHOTOS) return;
@@ -42,13 +44,15 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
     setShowCamera(false);
   };
 
-  const handleSave = () => {
-    // Reference-photo embeddings are computed by the MediaPipe Image Embedder
-    // native module wired in Stage 5; photoUris are kept for that step.
-    updateDraft({
-      customObject: { name: name.trim(), embeddings: draft.customObject?.embeddings ?? [] },
-    });
-    navigation.goBack();
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const embeddings = await embedReferencePhotos(photoUris);
+      updateDraft({ customObject: { name: name.trim(), embeddings } });
+      navigation.goBack();
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (showCamera) {
@@ -106,7 +110,11 @@ export function CustomObjectSetupScreen({ navigation }: Props) {
 
         <Text style={styles.helperText}>Take at least 2 photos, in the lighting you'll use each morning.</Text>
 
-        <GoldButton label="Save Object" onPress={handleSave} disabled={!canSave} />
+        {saving ? (
+          <ActivityIndicator color={colors.gold} />
+        ) : (
+          <GoldButton label="Save Object" onPress={handleSave} disabled={!canSave} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );

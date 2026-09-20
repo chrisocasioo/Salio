@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["UppyObjectEmbedderModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.uppyobjectembedder.UppyObjectEmbedderModule"]
+  }
+}

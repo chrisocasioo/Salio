@@ -59,10 +59,12 @@ src/
                alarmScheduler (the Platform.OS-dispatched native calls)
 
 modules/
-  uppy-alarm-kit/      iOS-only Expo module wrapping AlarmKit
-  uppy-alarm-android/  Android-only Expo module: AlarmManager scheduling,
-                       the ringing foreground service, the full-screen
-                       ringing Activity, and boot/timezone receivers
+  uppy-alarm-kit/        iOS-only Expo module wrapping AlarmKit
+  uppy-alarm-android/    Android-only Expo module: AlarmManager scheduling,
+                         the ringing foreground service, the full-screen
+                         ringing Activity, and boot/timezone receivers
+  uppy-object-embedder/  Both-platform Expo module wrapping the MediaPipe
+                         Image Embedder for the Custom Object mission
 ```
 
 ## Native modules
@@ -99,6 +101,13 @@ Confirm each one against the real framework headers on first build on a
 Mac — see the comments at the top of `UppyAlarmKitModule.swift` and
 `UppyStopIntent.swift`.
 
+**`modules/uppy-object-embedder` is a different story**: MediaPipe Tasks
+Vision 1.0.0 is a stable, already-released artifact, so its Maven AAR and
+CocoaPod xcframework could be downloaded and decompiled/inspected during
+development (`javap` on the Android classes, reading the real Objective-C
+headers for iOS) — every API call on both platforms was checked against
+the real thing, not just documentation. See its own README for details.
+
 ## Build stages
 
 - [x] **Stage 0** — Scaffolding: Expo TS project, EAS dev-client config,
@@ -123,8 +132,15 @@ Mac — see the comments at the top of `UppyAlarmKitModule.swift` and
       match against the picked pool item; otherwise it shows a retry
       banner. Custom Object capture takes the photo but always "matches"
       until Stage 5 wires the real embedder (see `customObjectMatch.ts`).
-- [ ] **Stage 5** — Custom Object mission (MediaPipe Image Embedder native
-      module).
+- [x] **Stage 5** — Custom Object mission: a new `uppy-object-embedder`
+      module (both platforms) wraps MediaPipe Tasks Vision's Image Embedder
+      with the bundled MobileNetV3-Small model. Custom Object setup embeds
+      each reference photo on save; MissionCaptureScreen embeds the live
+      photo and accepts on cosine similarity ≥ 0.7 against any reference
+      (`src/services/customObjectMatch.ts`) — replacing Stage 4's
+      always-match stub. Every MediaPipe API call on both platforms was
+      checked against the real compiled classes/headers (see
+      `modules/uppy-object-embedder/README.md`), not just docs.
 - [ ] **Stage 6** — Emergency Escape (100/+100/30-day-reset tap bypass).
 - [ ] **Stage 7** — Polish: permission copy, first-run flow, real-device
       checklist.
