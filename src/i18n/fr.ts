@@ -87,7 +87,7 @@ export const fr: typeof en = {
   randomObjectSetup: {
     subtitle: '{{count}} sur {{total}} sélectionnés · nous en choisirons un au hasard quand cette alarme sonnera.',
     items: {
-      mug: 'Mug',
+      coffeemaker: 'Cafetière',
       shoe: 'Chaussure',
       microwave: 'Micro-ondes',
       toilet: 'Toilettes',

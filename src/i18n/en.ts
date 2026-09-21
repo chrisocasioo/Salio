@@ -85,7 +85,7 @@ export const en = {
   randomObjectSetup: {
     subtitle: '{{count}} of {{total}} selected · we’ll pick one at random when this alarm rings.',
     items: {
-      mug: 'Mug',
+      coffeemaker: 'Coffee Maker',
       shoe: 'Shoe',
       microwave: 'Microwave',
       toilet: 'Toilet',

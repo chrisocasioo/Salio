@@ -10,7 +10,6 @@ const CONFIDENCE_THRESHOLD = 0.4;
 // "Handbag", "Hair Dryer" as a two-word label doesn't substring-match the single-word key). This
 // keeps the match forgiving without hardcoding every device's full label set, which varies.
 const SYNONYMS: Record<string, string[]> = {
-  mug: ['mug', 'cup', 'coffee cup', 'drinkware'],
   backpack: ['backpack', 'bag', 'rucksack', 'knapsack'],
   spoon: ['spoon', 'cutlery', 'tableware', 'utensil'],
   bowl: ['bowl', 'tableware', 'dishware'],
@@ -24,6 +23,17 @@ const SYNONYMS: Record<string, string[]> = {
   // and shows up in ML Kit's broader label set as general cookware terms, but which exact word
   // either model returns is less predictable than for the COCO-backed items.
   pan: ['pan', 'frying pan', 'frypan', 'fry pan', 'skillet', 'saucepan', 'cookware', 'wok'],
+  // Same "not a COCO class" caveat as pan above -- "coffeemaker" as a single word won't
+  // substring-match a real label like "coffee maker" or "espresso machine" on its own either.
+  coffeemaker: [
+    'coffee maker',
+    'coffeemaker',
+    'coffee machine',
+    'espresso machine',
+    'espresso maker',
+    'coffeepot',
+    'percolator',
+  ],
 };
 
 function candidateNames(targetKey: string, targetLabel: string): string[] {

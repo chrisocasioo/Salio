@@ -26,7 +26,7 @@ type Props = NativeStackScreenProps<EditorStackParamList, 'RandomObjectSetup'>;
 // `key` stays a fixed English identifier (matched against the classifier's own labels, with
 // forgiving synonym matching in src/services/imageLabeling.ts); only `name` is localized.
 export const RANDOM_OBJECT_LABELS: { key: string; name: string }[] = [
-  { key: 'mug', name: t('randomObjectSetup.items.mug') },
+  { key: 'coffeemaker', name: t('randomObjectSetup.items.coffeemaker') },
   { key: 'shoe', name: t('randomObjectSetup.items.shoe') },
   { key: 'microwave', name: t('randomObjectSetup.items.microwave') },
   { key: 'toilet', name: t('randomObjectSetup.items.toilet') },
