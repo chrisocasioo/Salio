@@ -6,16 +6,14 @@ export type ImageLabel = { text: string; confidence: number };
 const CONFIDENCE_THRESHOLD = 0.4;
 
 // A handful of the label vocabulary (ML Kit on Android, MediaPipe's Image Classifier on iOS)
-// doesn't exactly match our pool's display names (e.g. it says "Furniture" for a couch, "Bag"
-// often reads as "Baggage" or "Handbag"). This keeps the match forgiving without hardcoding every
-// device's full label set, which the build brief explicitly warns will vary.
+// doesn't exactly match our pool's display names (e.g. "Bag" often reads as "Baggage" or
+// "Handbag", "Hair Dryer" as a two-word label doesn't substring-match the single-word key). This
+// keeps the match forgiving without hardcoding every device's full label set, which varies.
 const SYNONYMS: Record<string, string[]> = {
-  television: ['tv', 'television'],
-  couch: ['couch', 'sofa', 'furniture'],
-  bag: ['bag', 'baggage', 'handbag', 'luggage'],
-  shelf: ['shelf', 'shelving', 'furniture'],
-  countertop: ['countertop', 'counter'],
-  lampshade: ['lampshade', 'lamp'],
+  bag: ['bag', 'baggage', 'handbag', 'luggage', 'backpack'],
+  spoon: ['spoon', 'cutlery', 'tableware', 'utensil'],
+  bowl: ['bowl', 'tableware', 'dishware'],
+  hairdryer: ['hair dryer', 'hairdryer', 'blow dryer'],
 };
 
 function candidateNames(targetKey: string, targetLabel: string): string[] {
