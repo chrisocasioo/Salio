@@ -15,6 +15,10 @@ const SYNONYMS: Record<string, string[]> = {
   spoon: ['spoon', 'cutlery', 'tableware', 'utensil'],
   bowl: ['bowl', 'tableware', 'dishware'],
   hairdryer: ['hair dryer', 'hairdryer', 'blow dryer'],
+  // Some models return fine-grained footwear subtypes instead of a generic "shoe" label — none of
+  // these substring-match "shoe" on their own, so without this the match would silently fail on a
+  // correct photo of anything other than a plain sneaker.
+  shoe: ['shoe', 'sneaker', 'sandal', 'boot', 'slipper', 'loafer', 'flip-flop', 'flip flop', 'heel', 'footwear'],
 };
 
 function candidateNames(targetKey: string, targetLabel: string): string[] {
