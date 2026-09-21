@@ -93,7 +93,7 @@ export const ja: typeof en = {
       toilet: 'トイレ',
       knife: 'ナイフ',
       pan: 'フライパン',
-      remote: 'リモコン',
+      vehicle: '乗り物',
       toothbrush: '歯ブラシ',
       spoon: 'スプーン',
       bowl: 'ボウル',

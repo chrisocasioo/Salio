@@ -34,6 +34,10 @@ const SYNONYMS: Record<string, string[]> = {
     'coffeepot',
     'percolator',
   ],
+  // "Vehicle" isn't itself a COCO class, but car/truck/bicycle/motorcycle each are — matching any
+  // of them (rather than requiring the generic word "vehicle") covers what the classifier actually
+  // returns for a real photo.
+  vehicle: ['vehicle', 'car', 'truck', 'bicycle', 'motorcycle', 'bike'],
 };
 
 function candidateNames(targetKey: string, targetLabel: string): string[] {

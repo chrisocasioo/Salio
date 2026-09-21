@@ -93,7 +93,7 @@ export const pt: typeof en = {
       toilet: 'Vaso sanitário',
       knife: 'Faca',
       pan: 'Frigideira',
-      remote: 'Controle remoto',
+      vehicle: 'Veículo',
       toothbrush: 'Escova de dente',
       spoon: 'Colher',
       bowl: 'Tigela',

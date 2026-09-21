@@ -91,7 +91,7 @@ export const en = {
       toilet: 'Toilet',
       knife: 'Knife',
       pan: 'Frying Pan',
-      remote: 'Remote Control',
+      vehicle: 'Vehicle',
       toothbrush: 'Toothbrush',
       spoon: 'Spoon',
       bowl: 'Bowl',
