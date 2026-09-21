@@ -87,12 +87,9 @@ export const fr: typeof en = {
   randomObjectSetup: {
     subtitle: '{{count}} sur {{total}} sélectionnés · nous en choisirons un au hasard quand cette alarme sonnera.',
     items: {
-      pillow: 'Oreiller',
-      clock: 'Horloge',
-      cup: 'Tasse',
+      mug: 'Mug',
       shoe: 'Chaussure',
       plant: 'Plante',
-      bag: 'Sac',
       umbrella: 'Parapluie',
       bottle: 'Bouteille d’eau',
       book: 'Livre',
@@ -102,6 +99,9 @@ export const fr: typeof en = {
       bowl: 'Bol',
       scissors: 'Ciseaux',
       hairdryer: 'Sèche-cheveux',
+      backpack: 'Sac à dos',
+      toaster: 'Grille-pain',
+      fork: 'Fourchette',
       vase: 'Vase',
     },
   },

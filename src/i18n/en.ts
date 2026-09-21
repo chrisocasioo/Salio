@@ -85,12 +85,9 @@ export const en = {
   randomObjectSetup: {
     subtitle: '{{count}} of {{total}} selected · we’ll pick one at random when this alarm rings.',
     items: {
-      pillow: 'Pillow',
-      clock: 'Clock',
-      cup: 'Cup',
+      mug: 'Mug',
       shoe: 'Shoe',
       plant: 'Plant',
-      bag: 'Bag',
       umbrella: 'Umbrella',
       bottle: 'Water Bottle',
       book: 'Book',
@@ -101,6 +98,9 @@ export const en = {
       scissors: 'Scissors',
       hairdryer: 'Hair Dryer',
       vase: 'Vase',
+      backpack: 'Backpack',
+      toaster: 'Toaster',
+      fork: 'Fork',
     },
   },
   customObjectSetup: {

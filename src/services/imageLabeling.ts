@@ -10,7 +10,8 @@ const CONFIDENCE_THRESHOLD = 0.4;
 // "Handbag", "Hair Dryer" as a two-word label doesn't substring-match the single-word key). This
 // keeps the match forgiving without hardcoding every device's full label set, which varies.
 const SYNONYMS: Record<string, string[]> = {
-  bag: ['bag', 'baggage', 'handbag', 'luggage', 'backpack'],
+  mug: ['mug', 'cup', 'coffee cup', 'drinkware'],
+  backpack: ['backpack', 'bag', 'rucksack', 'knapsack'],
   spoon: ['spoon', 'cutlery', 'tableware', 'utensil'],
   bowl: ['bowl', 'tableware', 'dishware'],
   hairdryer: ['hair dryer', 'hairdryer', 'blow dryer'],

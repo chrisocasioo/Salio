@@ -87,12 +87,9 @@ export const ja: typeof en = {
   randomObjectSetup: {
     subtitle: '{{total}}個中{{count}}個を選択中 · このアラームが鳴るとき、ランダムに1つ選ばれます。',
     items: {
-      pillow: '枕',
-      clock: '時計',
-      cup: 'カップ',
+      mug: 'マグカップ',
       shoe: '靴',
       plant: '観葉植物',
-      bag: 'バッグ',
       umbrella: '傘',
       bottle: '水筒',
       book: '本',
@@ -102,6 +99,9 @@ export const ja: typeof en = {
       bowl: 'ボウル',
       scissors: 'はさみ',
       hairdryer: 'ドライヤー',
+      backpack: 'リュック',
+      toaster: 'トースター',
+      fork: 'フォーク',
       vase: '花瓶',
     },
   },

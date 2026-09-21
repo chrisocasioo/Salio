@@ -12,20 +12,19 @@ import { colors } from '../theme/theme';
 
 type Props = NativeStackScreenProps<EditorStackParamList, 'RandomObjectSetup'>;
 
-// Small, common, portable household objects — picked to match generic on-device classifier
-// vocabulary (ML Kit's bundled base image-labeling model on Android, MediaPipe's Image Classifier
-// on iOS), most of which overlap with widely-used object-detection label sets. Large fixed
-// furniture/fixtures (a sink, a couch, a whole shelf) were deliberately left out: not really
-// "objects" someone can locate and photograph up close the way a water bottle or a spoon is.
+// Small, common household objects someone actually has to get up for — no bedside-reachable items
+// (a pillow, a clock, a water cup someone might already keep on a nightstand) and nothing too
+// vague to picture at a glance (a "bag" could be a purse, a backpack, or a trash bag). Also picked
+// to match generic on-device classifier vocabulary (ML Kit's bundled base image-labeling model on
+// Android, MediaPipe's Image Classifier on iOS), which overlaps with widely-used object-detection
+// label sets. Large fixed furniture/fixtures (a sink, a couch, a whole shelf) are deliberately left
+// out too: not really "objects" someone can locate and photograph up close.
 // `key` stays a fixed English identifier (matched against the classifier's own labels, with
 // forgiving synonym matching in src/services/imageLabeling.ts); only `name` is localized.
 export const RANDOM_OBJECT_LABELS: { key: string; name: string }[] = [
-  { key: 'pillow', name: t('randomObjectSetup.items.pillow') },
-  { key: 'clock', name: t('randomObjectSetup.items.clock') },
-  { key: 'cup', name: t('randomObjectSetup.items.cup') },
+  { key: 'mug', name: t('randomObjectSetup.items.mug') },
   { key: 'shoe', name: t('randomObjectSetup.items.shoe') },
   { key: 'plant', name: t('randomObjectSetup.items.plant') },
-  { key: 'bag', name: t('randomObjectSetup.items.bag') },
   { key: 'umbrella', name: t('randomObjectSetup.items.umbrella') },
   { key: 'bottle', name: t('randomObjectSetup.items.bottle') },
   { key: 'book', name: t('randomObjectSetup.items.book') },
@@ -36,6 +35,9 @@ export const RANDOM_OBJECT_LABELS: { key: string; name: string }[] = [
   { key: 'scissors', name: t('randomObjectSetup.items.scissors') },
   { key: 'hairdryer', name: t('randomObjectSetup.items.hairdryer') },
   { key: 'vase', name: t('randomObjectSetup.items.vase') },
+  { key: 'backpack', name: t('randomObjectSetup.items.backpack') },
+  { key: 'toaster', name: t('randomObjectSetup.items.toaster') },
+  { key: 'fork', name: t('randomObjectSetup.items.fork') },
 ];
 
 export function RandomObjectSetupScreen({ navigation }: Props) {
