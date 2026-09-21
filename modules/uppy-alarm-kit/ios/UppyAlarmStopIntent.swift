@@ -16,6 +16,15 @@ import Foundation
 /// way as opening a locked-screen notification) takes over exactly as it already does — no snooze,
 /// no dismissal, until the mission or Emergency Escape completes inside the app. AlarmKit's own
 /// alert is only ever a wake-and-hand-off trigger; it never owns the actual dismiss logic.
+///
+/// Deliberately does NOT call AlarmManager.shared.stop(id:) here, even though that's normally the
+/// right cleanup once an alert is done: AlarmKit's own alert had its own sound playing this whole
+/// time, and ending it tears down the shared AVAudioSession as a side effect — since there's only
+/// one AVAudioSession per process, that silenced the AVAudioPlayer this same call just started via
+/// startRinging (confirmed on a real device: the alarm sound cut out the instant Stop was tapped).
+/// Cleaning up the underlying AlarmKit alarm is deferred to UppyAlarmKitModule.stopRinging, which
+/// already calls it — safely, since by then the person has actually finished dismissing the alarm
+/// and every sound is meant to stop together anyway.
 struct UppyAlarmStopIntent: LiveActivityIntent {
   static var title: LocalizedStringResource = "Open Alarm"
 
@@ -35,12 +44,6 @@ struct UppyAlarmStopIntent: LiveActivityIntent {
 
     let repeatOnce = UppyAlarmStore.repeatOnce(forAlarmID: alarmID)
     UppyAlarmScheduler.shared.startRinging(alarmID: alarmID, repeatOnce: repeatOnce)
-
-    // Ends only this occurrence's alert; the alarm's own weekly recurrence (if any) is untouched
-    // and will fire again on its next matching day, same as stop(id:) does for the built-in Clock.
-    if let alarmKitID = UUID(uuidString: alarmID) {
-      try? AlarmManager.shared.stop(id: alarmKitID)
-    }
 
     return .result()
   }
