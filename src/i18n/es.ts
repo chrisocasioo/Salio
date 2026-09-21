@@ -90,7 +90,7 @@ export const es: typeof en = {
       mug: 'Taza',
       shoe: 'Zapato',
       plant: 'Planta',
-      umbrella: 'Paraguas',
+      toilet: 'Inodoro',
       knife: 'Cuchillo',
       book: 'Libro',
       remote: 'Control remoto',

@@ -88,7 +88,7 @@ export const en = {
       mug: 'Mug',
       shoe: 'Shoe',
       plant: 'Plant',
-      umbrella: 'Umbrella',
+      toilet: 'Toilet',
       knife: 'Knife',
       book: 'Book',
       remote: 'Remote Control',

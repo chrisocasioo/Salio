@@ -90,7 +90,7 @@ export const pt: typeof en = {
       mug: 'Caneca',
       shoe: 'Sapato',
       plant: 'Planta',
-      umbrella: 'Guarda-chuva',
+      toilet: 'Vaso sanitário',
       knife: 'Faca',
       book: 'Livro',
       remote: 'Controle remoto',
