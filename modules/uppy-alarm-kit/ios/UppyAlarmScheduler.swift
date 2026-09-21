@@ -41,6 +41,22 @@ final class UppyAlarmScheduler {
   /// kill surfaces the warning promptly.
   private static let forceQuitWarningDelay: TimeInterval = 15
 
+  /// Matches the 5 languages localized on the JS side (src/i18n) — this notification is scheduled
+  /// entirely from native code, so it can't reuse that dictionary and needs its own copy here.
+  /// Falls back to English for any other device language.
+  private static let forceQuitWarningStrings: [String: (title: String, body: String)] = [
+    "en": ("Reopen Salio", "Your alarm may not ring while the app is closed."),
+    "es": ("Vuelve a abrir Salio", "Es posible que tu alarma no suene mientras la app esté cerrada."),
+    "fr": ("Rouvrez Salio", "Votre alarme pourrait ne pas sonner tant que l’application est fermée."),
+    "pt": ("Reabra o Salio", "Seu alarme pode não tocar enquanto o app estiver fechado."),
+    "ja": ("Salioを再度開いてください", "アプリが閉じている間はアラームが鳴らない可能性があります。"),
+  ]
+
+  private static func forceQuitWarningCopy() -> (title: String, body: String) {
+    let code = Locale.preferredLanguages.first.map { String($0.prefix(2)).lowercased() } ?? "en"
+    return forceQuitWarningStrings[code] ?? forceQuitWarningStrings["en"]!
+  }
+
   // MARK: - Keep-alive / ringing lifecycle
 
   /// Single entry point: call after any schedule/cancel/stop change. Starts or stops the
@@ -196,9 +212,10 @@ final class UppyAlarmScheduler {
     let isRinging = UppyAlarmStore.currentlyRingingAlarmID() != nil
     guard hasArmed || isRinging else { return }
 
+    let copy = Self.forceQuitWarningCopy()
     let content = UNMutableNotificationContent()
-    content.title = "Reopen Salio"
-    content.body = "Your alarm may not ring while the app is closed."
+    content.title = copy.title
+    content.body = copy.body
     content.sound = .default
     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Self.forceQuitWarningDelay, repeats: false)
     let request = UNNotificationRequest(identifier: Self.forceQuitWarningID, content: content, trigger: trigger)
