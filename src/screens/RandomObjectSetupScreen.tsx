@@ -28,7 +28,7 @@ type Props = NativeStackScreenProps<EditorStackParamList, 'RandomObjectSetup'>;
 export const RANDOM_OBJECT_LABELS: { key: string; name: string }[] = [
   { key: 'mug', name: t('randomObjectSetup.items.mug') },
   { key: 'shoe', name: t('randomObjectSetup.items.shoe') },
-  { key: 'plant', name: t('randomObjectSetup.items.plant') },
+  { key: 'microwave', name: t('randomObjectSetup.items.microwave') },
   { key: 'toilet', name: t('randomObjectSetup.items.toilet') },
   { key: 'knife', name: t('randomObjectSetup.items.knife') },
   { key: 'pan', name: t('randomObjectSetup.items.pan') },

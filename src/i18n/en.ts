@@ -87,7 +87,7 @@ export const en = {
     items: {
       mug: 'Mug',
       shoe: 'Shoe',
-      plant: 'Plant',
+      microwave: 'Microwave',
       toilet: 'Toilet',
       knife: 'Knife',
       pan: 'Frying Pan',

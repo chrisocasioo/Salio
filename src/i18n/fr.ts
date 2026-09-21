@@ -89,7 +89,7 @@ export const fr: typeof en = {
     items: {
       mug: 'Mug',
       shoe: 'Chaussure',
-      plant: 'Plante',
+      microwave: 'Micro-ondes',
       toilet: 'Toilettes',
       knife: 'Couteau',
       pan: 'Poêle',

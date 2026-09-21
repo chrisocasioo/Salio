@@ -89,7 +89,7 @@ export const ja: typeof en = {
     items: {
       mug: 'マグカップ',
       shoe: '靴',
-      plant: '観葉植物',
+      microwave: '電子レンジ',
       toilet: 'トイレ',
       knife: 'ナイフ',
       pan: 'フライパン',
