@@ -1,0 +1,47 @@
+import AppIntents
+import AlarmKit
+import Foundation
+
+/// Runs when the person taps AlarmKit's automatic Stop button. That button's label/appearance
+/// can't be customized (the `stopButton:` parameter on AlarmPresentation.Alert is deprecated and
+/// does nothing — the system always shows its own default), and tapping it always ends that
+/// alert's presentation no matter what this intent does. So this doesn't try to prevent that or
+/// re-arm a follow-up alert (the approach tried the first time this project used AlarmKit): it
+/// treats the tap as "open the app," using `supportedModes: .foreground(.immediate)` to reliably
+/// bring Salio itself to the foreground. That flag is the fix for the older, deprecated
+/// `openAppWhenRun`, which is why a nearly identical intent didn't reliably foreground the app
+/// when this was first attempted — this repo never actually tried the current, working mechanism.
+///
+/// Once foregrounded, the existing mission-gated ringing flow (AlarmRingingRoot, reached the same
+/// way as opening a locked-screen notification) takes over exactly as it already does — no snooze,
+/// no dismissal, until the mission or Emergency Escape completes inside the app. AlarmKit's own
+/// alert is only ever a wake-and-hand-off trigger; it never owns the actual dismiss logic.
+struct UppyAlarmStopIntent: LiveActivityIntent {
+  static var title: LocalizedStringResource = "Open Alarm"
+
+  static var supportedModes: IntentModes { .foreground(.immediate) }
+
+  @Parameter(title: "alarmID")
+  var alarmID: String
+
+  init() {}
+
+  init(alarmID: String) {
+    self.alarmID = alarmID
+  }
+
+  func perform() async throws -> some IntentResult {
+    UppyAlarmStore.setPendingRingingAlarmID(alarmID)
+
+    let repeatOnce = UppyAlarmStore.repeatOnce(forAlarmID: alarmID)
+    UppyAlarmScheduler.shared.startRinging(alarmID: alarmID, repeatOnce: repeatOnce)
+
+    // Ends only this occurrence's alert; the alarm's own weekly recurrence (if any) is untouched
+    // and will fire again on its next matching day, same as stop(id:) does for the built-in Clock.
+    if let alarmKitID = UUID(uuidString: alarmID) {
+      try? AlarmManager.shared.stop(id: alarmKitID)
+    }
+
+    return .result()
+  }
+}
