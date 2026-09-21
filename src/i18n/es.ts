@@ -92,7 +92,7 @@ export const es: typeof en = {
       plant: 'Planta',
       toilet: 'Inodoro',
       knife: 'Cuchillo',
-      book: 'Libro',
+      pan: 'Sartén',
       remote: 'Control remoto',
       toothbrush: 'Cepillo de dientes',
       spoon: 'Cuchara',

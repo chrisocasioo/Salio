@@ -90,7 +90,7 @@ export const en = {
       plant: 'Plant',
       toilet: 'Toilet',
       knife: 'Knife',
-      book: 'Book',
+      pan: 'Frying Pan',
       remote: 'Remote Control',
       toothbrush: 'Toothbrush',
       spoon: 'Spoon',

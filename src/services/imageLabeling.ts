@@ -19,6 +19,11 @@ const SYNONYMS: Record<string, string[]> = {
   // these substring-match "shoe" on their own, so without this the match would silently fail on a
   // correct photo of anything other than a plain sneaker.
   shoe: ['shoe', 'sneaker', 'sandal', 'boot', 'slipper', 'loafer', 'flip-flop', 'flip flop', 'heel', 'footwear'],
+  // "Frying pan" isn't one of COCO's 80 classes the way most of this pool is, so this leans harder
+  // on synonyms than usual: it's a real ImageNet class (likely what the iOS classifier draws on)
+  // and shows up in ML Kit's broader label set as general cookware terms, but which exact word
+  // either model returns is less predictable than for the COCO-backed items.
+  pan: ['pan', 'frying pan', 'frypan', 'fry pan', 'skillet', 'saucepan', 'cookware', 'wok'],
 };
 
 function candidateNames(targetKey: string, targetLabel: string): string[] {

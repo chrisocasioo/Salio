@@ -31,7 +31,7 @@ export const RANDOM_OBJECT_LABELS: { key: string; name: string }[] = [
   { key: 'plant', name: t('randomObjectSetup.items.plant') },
   { key: 'toilet', name: t('randomObjectSetup.items.toilet') },
   { key: 'knife', name: t('randomObjectSetup.items.knife') },
-  { key: 'book', name: t('randomObjectSetup.items.book') },
+  { key: 'pan', name: t('randomObjectSetup.items.pan') },
   { key: 'remote', name: t('randomObjectSetup.items.remote') },
   { key: 'toothbrush', name: t('randomObjectSetup.items.toothbrush') },
   { key: 'spoon', name: t('randomObjectSetup.items.spoon') },
