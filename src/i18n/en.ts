@@ -89,7 +89,7 @@ export const en = {
       shoe: 'Shoe',
       plant: 'Plant',
       umbrella: 'Umbrella',
-      bottle: 'Water Bottle',
+      knife: 'Knife',
       book: 'Book',
       remote: 'Remote Control',
       toothbrush: 'Toothbrush',

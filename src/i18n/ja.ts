@@ -91,7 +91,7 @@ export const ja: typeof en = {
       shoe: '靴',
       plant: '観葉植物',
       umbrella: '傘',
-      bottle: '水筒',
+      knife: 'ナイフ',
       book: '本',
       remote: 'リモコン',
       toothbrush: '歯ブラシ',

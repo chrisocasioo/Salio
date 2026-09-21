@@ -91,7 +91,7 @@ export const fr: typeof en = {
       shoe: 'Chaussure',
       plant: 'Plante',
       umbrella: 'Parapluie',
-      bottle: 'Bouteille d’eau',
+      knife: 'Couteau',
       book: 'Livre',
       remote: 'Télécommande',
       toothbrush: 'Brosse à dents',
