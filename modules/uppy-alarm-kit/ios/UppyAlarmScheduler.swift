@@ -291,6 +291,11 @@ final class UppyAlarmScheduler {
     content.body = "Tap to open your alarm."
     content.sound = .default
     content.userInfo = ["alarmId": id]
+    // Wakes/lights the screen even when locked and breaks through most Focus/DND configurations —
+    // the strongest interruption level available without Apple's restricted Critical Alerts
+    // entitlement. Requires the com.apple.developer.usernotifications.time-sensitive entitlement
+    // (see app.json ios.entitlements).
+    content.interruptionLevel = .timeSensitive
 
     let center = UNUserNotificationCenter.current()
 

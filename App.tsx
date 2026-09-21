@@ -56,20 +56,25 @@ export default function App() {
     setNeedsOnboarding(false);
   };
 
-  if (!fontsLoaded || needsOnboarding === null) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.gold} />
-      </View>
-    );
-  }
-
+  // Checked first, ahead of font/onboarding loading: a pending ringing alarm means the app was
+  // just opened from a locked-screen notification tap, and every extra millisecond before the
+  // ringing screen appears works against the "wakes straight into the alarm" feel this needs.
+  // AlarmRingingRoot loads its own fonts and alarm data independently, so it doesn't need App's
+  // unrelated state (onboarding-settings DB read, App-level font load) to resolve first.
   if (ringingAlarmId) {
     return (
       <SafeAreaProvider>
         <AlarmRingingRoot alarmId={ringingAlarmId} onDismissed={() => setRingingAlarmId(null)} />
         <StatusBar style="light" />
       </SafeAreaProvider>
+    );
+  }
+
+  if (!fontsLoaded || needsOnboarding === null) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.gold} />
+      </View>
     );
   }
 
