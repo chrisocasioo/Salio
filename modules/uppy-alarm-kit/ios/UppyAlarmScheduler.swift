@@ -197,8 +197,8 @@ final class UppyAlarmScheduler {
     guard hasArmed || isRinging else { return }
 
     let content = UNMutableNotificationContent()
-    content.title = "Salio was closed"
-    content.body = "Reopen the app — closing it can stop an alarm from ringing or let it skip the dismiss mission."
+    content.title = "Reopen Salio"
+    content.body = "Your alarm may not ring while the app is closed."
     content.sound = .default
     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Self.forceQuitWarningDelay, repeats: false)
     let request = UNNotificationRequest(identifier: Self.forceQuitWarningID, content: content, trigger: trigger)
