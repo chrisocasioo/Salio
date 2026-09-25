@@ -142,6 +142,7 @@ final class UppyAlarmScheduler {
     ringPlayer?.stop()
     UppyAlarmStore.setCurrentlyRingingAlarmID(nil)
     UppyAlarmStore.clearPendingRingingAlarmID()
+    restorePreviousVolume()
     armed()
   }
 
@@ -179,6 +180,11 @@ final class UppyAlarmScheduler {
     }
   }
 
+  /// The system volume level from just before the first forceMaxVolume() call of the current
+  /// ringing session, so restorePreviousVolume() can put it back once the alarm is dismissed
+  /// rather than leaving the phone maxed out. nil whenever no alarm is currently ringing.
+  private var volumeBeforeRinging: Float?
+
   /// Real alarm-clock reliability needs the alarm audible regardless of whatever the phone's
   /// current media volume happens to be — `.playback` category audio still plays at that volume
   /// level, it only bypasses the physical mute switch. This forces the system volume up via the
@@ -187,19 +193,38 @@ final class UppyAlarmScheduler {
   /// system volume... whenever it drifts").
   private func forceMaxVolume() {
     DispatchQueue.main.async {
-      guard let window = UIApplication.shared.connectedScenes
-        .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
-        .first
-      else {
-        return
+      // Guarded so a later call (e.g. resuming after an interruption mid-ring) doesn't overwrite
+      // the real pre-alarm level with the already-maxed one.
+      if self.volumeBeforeRinging == nil {
+        self.volumeBeforeRinging = AVAudioSession.sharedInstance().outputVolume
       }
-      let volumeView = MPVolumeView(frame: CGRect(x: -1000, y: -1000, width: 1, height: 1))
-      window.addSubview(volumeView)
-      if let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider {
-        slider.value = 1.0
-      }
-      volumeView.removeFromSuperview()
+      self.setSystemVolume(1.0)
     }
+  }
+
+  /// Undoes forceMaxVolume() once the alarm is actually dismissed, so the next thing the person
+  /// plays (music, a video) isn't blasted at full volume just because the alarm needed to be.
+  private func restorePreviousVolume() {
+    guard let previous = volumeBeforeRinging else { return }
+    volumeBeforeRinging = nil
+    DispatchQueue.main.async {
+      self.setSystemVolume(previous)
+    }
+  }
+
+  private func setSystemVolume(_ value: Float) {
+    guard let window = UIApplication.shared.connectedScenes
+      .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
+      .first
+    else {
+      return
+    }
+    let volumeView = MPVolumeView(frame: CGRect(x: -1000, y: -1000, width: 1, height: 1))
+    window.addSubview(volumeView)
+    if let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider {
+      slider.value = value
+    }
+    volumeView.removeFromSuperview()
   }
 
   private func stopEverything() {
