@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import React, { useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraIcon } from '../../components/icons';
 import { t } from '../../i18n';
@@ -9,7 +9,14 @@ import { labelImage, matchesTarget } from '../../services/imageLabeling';
 import { colors } from '../../theme/theme';
 import type { CustomObject, DismissMission } from '../../types/alarm';
 
-type BannerState = { text: string; tone: 'neutral' | 'retry' | 'success' } | null;
+// Pause between one scan finishing and the next starting -- not a fixed-rate interval, since a
+// classification round trip (capture -> native label/embedding lookup) can itself take a while,
+// and firing on a plain setInterval regardless of that would pile up overlapping captures.
+const SCAN_PAUSE_MS = 500;
+// A miss is the expected, default state while scanning, not an error -- only surface a message if
+// capturing/classifying itself keeps failing (a real problem), and only after enough consecutive
+// failures that a single camera hiccup doesn't flash a scary message during normal use.
+const TROUBLE_AFTER_CONSECUTIVE_ERRORS = 4;
 
 export function MissionCaptureScreen({
   mission,
@@ -31,49 +38,66 @@ export function MissionCaptureScreen({
   onEmergencyEscape: () => void;
 }) {
   const [permission, requestPermission] = useCameraPermissions();
-  const [banner, setBanner] = useState<BannerState>(null);
-  const [busy, setBusy] = useState(false);
+  const [matched, setMatched] = useState(false);
+  const [inTrouble, setInTrouble] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
-  const checkPhoto = async (uri: string): Promise<boolean> => {
-    if (mission === 'custom_object' && customObject) {
-      return matchesCustomObject(uri, customObject);
+  // Runs the whole continuous-scan loop: as soon as the camera's ready, keep capturing and
+  // checking frames on its own, with no button to tap, until one matches. Re-runs (restarting the
+  // loop against the new target) whenever the mission target changes, e.g. after a reroll.
+  useEffect(() => {
+    if (permission === null) return;
+    if (!permission.granted) {
+      requestPermission();
+      return;
     }
-    const labels = await labelImage(uri);
-    return matchesTarget(labels, targetKey, targetLabel);
-  };
 
-  const shoot = async () => {
-    if (busy) return;
-    if (!permission?.granted) {
-      const res = await requestPermission();
-      if (!res.granted) return;
-    }
-    setBusy(true);
-    try {
-      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.5 });
-      if (!photo?.uri) {
-        setBanner({ text: t('alarmRinging.couldNotTakePhoto'), tone: 'retry' });
-        return;
-      }
-      const matched = await checkPhoto(photo.uri);
-      if (matched) {
-        setBanner({ text: t('alarmRinging.matchFoundDismissing'), tone: 'success' });
-        setTimeout(onSuccess, 900);
-      } else {
-        setBanner({ text: t('alarmRinging.notQuiteTryAgain'), tone: 'retry' });
-      }
-    } catch {
-      setBanner({ text: t('alarmRinging.somethingWentWrongTryAgain'), tone: 'retry' });
-    } finally {
-      setBusy(false);
-    }
-  };
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let consecutiveErrors = 0;
 
-  const handleReroll = () => {
-    setBanner(null);
-    onReroll?.();
-  };
+    const checkPhoto = async (uri: string): Promise<boolean> => {
+      if (mission === 'custom_object' && customObject) {
+        return matchesCustomObject(uri, customObject);
+      }
+      const labels = await labelImage(uri);
+      return matchesTarget(labels, targetKey, targetLabel);
+    };
+
+    const scanOnce = async () => {
+      try {
+        const photo = await cameraRef.current?.takePictureAsync({ quality: 0.4 });
+        if (cancelled) return;
+        if (!photo?.uri) throw new Error('no photo uri');
+
+        const isMatch = await checkPhoto(photo.uri);
+        if (cancelled) return;
+        consecutiveErrors = 0;
+        setInTrouble(false);
+
+        if (isMatch) {
+          setMatched(true);
+          setTimeout(onSuccess, 900);
+          return; // stop scanning -- the mission is complete
+        }
+      } catch {
+        consecutiveErrors += 1;
+        if (!cancelled) setInTrouble(consecutiveErrors >= TROUBLE_AFTER_CONSECUTIVE_ERRORS);
+      }
+      if (!cancelled) {
+        timeoutId = setTimeout(scanOnce, SCAN_PAUSE_MS);
+      }
+    };
+
+    setMatched(false);
+    setInTrouble(false);
+    scanOnce();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [permission, mission, targetKey, targetLabel, customObject]);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -88,7 +112,7 @@ export function MissionCaptureScreen({
       </View>
 
       {canReroll ? (
-        <Pressable onPress={handleReroll} hitSlop={8} style={styles.rerollRow}>
+        <Pressable onPress={onReroll} hitSlop={8} style={styles.rerollRow}>
           <Text style={styles.rerollText}>{t('alarmRinging.reroll')}</Text>
         </Pressable>
       ) : null}
@@ -105,25 +129,21 @@ export function MissionCaptureScreen({
           <View style={[styles.corner, styles.cornerBL]} />
           <View style={[styles.corner, styles.cornerBR]} />
 
-          {banner ? (
-            <View
-              style={[
-                styles.banner,
-                banner.tone === 'success' && styles.bannerSuccess,
-              ]}
-            >
-              <Text style={[styles.bannerText, banner.tone === 'success' && styles.bannerTextSuccess]}>
-                {banner.text}
+          {matched ? (
+            <View style={[styles.banner, styles.bannerSuccess]}>
+              <Text style={[styles.bannerText, styles.bannerTextSuccess]}>
+                {t('alarmRinging.matchFoundDismissing')}
               </Text>
             </View>
-          ) : null}
+          ) : (
+            <View style={styles.banner}>
+              <ActivityIndicator size="small" color={colors.inkDim} />
+              <Text style={styles.bannerText}>
+                {t(inTrouble ? 'alarmRinging.somethingWentWrongTryAgain' : 'alarmRinging.scanning')}
+              </Text>
+            </View>
+          )}
         </View>
-      </View>
-
-      <View style={styles.footer}>
-        <Pressable onPress={shoot} style={styles.shutter} accessibilityLabel={t('common.takePhoto')} disabled={busy}>
-          <View style={styles.shutterInner} />
-        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -178,7 +198,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 40,
   },
   viewfinder: {
     width: '100%',
@@ -204,6 +224,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
+    flexDirection: 'row',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
@@ -211,6 +232,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   bannerSuccess: {
     backgroundColor: colors.goldSoft,
@@ -223,25 +246,5 @@ const styles = StyleSheet.create({
   },
   bannerTextSuccess: {
     color: colors.gold,
-  },
-  footer: {
-    alignItems: 'center',
-    paddingBottom: 40,
-  },
-  shutter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.bg,
-    borderWidth: 4,
-    borderColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shutterInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.gold,
   },
 });
