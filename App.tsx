@@ -15,7 +15,7 @@ import { t } from './src/i18n';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AlarmRingingRoot } from './src/screens/ringing/AlarmRingingRoot';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
-import { getPendingRingingAlarmId } from './src/services/alarmScheduler';
+import { addPendingRingingAlarmListener, getPendingRingingAlarmId } from './src/services/alarmScheduler';
 import { colors } from './src/theme/theme';
 import './src/navigation/types';
 
@@ -48,7 +48,15 @@ export default function App() {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') checkPending();
     });
-    return () => subscription.remove();
+    // The AppState listener above only fires on a background-to-active transition, so it misses
+    // the tap entirely if the app was already in the foreground when the alarm fired (e.g. phone
+    // unlocked with Salio already open) -- there's no such transition to catch. This event, sent
+    // directly by the native tap handler, covers exactly that gap.
+    const unsubscribeTap = addPendingRingingAlarmListener((alarmId) => setRingingAlarmId(alarmId));
+    return () => {
+      subscription.remove();
+      unsubscribeTap();
+    };
   }, []);
 
   const finishOnboarding = () => {

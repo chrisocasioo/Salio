@@ -25,8 +25,28 @@ import UserNotifications
 /// declined, or AlarmKit's own scheduling limits can be hit, and none of that should stop the
 /// alarm from working via the notification + background-audio mechanism alone.
 public class UppyAlarmKitModule: Module {
+  // JS learns about a pending ringing alarm two ways: polling getPendingRingingAlarmId() (on
+  // mount, and on every AppState 'active' transition) and this event, sent the moment a
+  // notification/AlarmKit tap actually happens. The event exists because the polling alone has a
+  // real gap: if the app is already in the foreground when the alarm fires (e.g. phone unlocked,
+  // Salio already open) there's no background-to-active transition for AppState to catch, so
+  // nothing would ever re-check and the ringing screen would silently never appear -- confirmed as
+  // the cause of "the notification doesn't open the app" when unlocked. Both UppyNotificationDelegate
+  // and UppyAlarmStopIntent call notifyAlarmTapped so this covers a plain notification tap and an
+  // AlarmKit alert tap alike.
+  private static weak var shared: UppyAlarmKitModule?
+
+  public override func didCreate() {
+    Self.shared = self
+  }
+
+  static func notifyAlarmTapped(alarmID: String) {
+    shared?.sendEvent("onAlarmTapped", ["alarmId": alarmID])
+  }
+
   public func definition() -> ModuleDefinition {
     Name("UppyAlarmKit")
+    Events("onAlarmTapped")
 
     AsyncFunction("requestAuthorization") { () -> String in
       let granted = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in

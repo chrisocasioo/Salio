@@ -41,6 +41,7 @@ public class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotifica
       // silent until the mission screen already shows.
       let repeatOnce = UppyAlarmStore.repeatOnce(forAlarmID: alarmID)
       UppyAlarmScheduler.shared.startRinging(alarmID: alarmID, repeatOnce: repeatOnce)
+      UppyAlarmKitModule.notifyAlarmTapped(alarmID: alarmID)
     }
     completionHandler()
   }

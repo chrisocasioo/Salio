@@ -98,6 +98,19 @@ export function getPendingRingingAlarmId(): string | null {
   return AlarmKit.getPendingRingingAlarmId();
 }
 
+/**
+ * iOS only: fires the moment a ringing alarm's notification or AlarmKit alert is tapped, so the
+ * ringing screen can appear even when the app was already in the foreground -- the AppState
+ * 'active' transition App.tsx also listens for never happens in that case (there's no
+ * background-to-active edge to catch), so polling getPendingRingingAlarmId() there alone would
+ * silently miss it. Returns a no-op unsubscribe function on other platforms/when unavailable.
+ */
+export function addPendingRingingAlarmListener(callback: (alarmId: string) => void): () => void {
+  if (Platform.OS !== 'ios' || !AlarmKit) return () => {};
+  const subscription = AlarmKit.addListener('onAlarmTapped', ({ alarmId }) => callback(alarmId));
+  return () => subscription.remove();
+}
+
 export function clearPendingRingingAlarmId(): void {
   AlarmKit?.clearPendingRingingAlarmId();
 }

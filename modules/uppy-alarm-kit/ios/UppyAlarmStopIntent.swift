@@ -51,6 +51,7 @@ struct UppyAlarmStopIntent: LiveActivityIntent {
 
     let repeatOnce = UppyAlarmStore.repeatOnce(forAlarmID: alarmID)
     UppyAlarmScheduler.shared.resumeRingingAfterAlarmKitHandoff(alarmID: alarmID, repeatOnce: repeatOnce)
+    UppyAlarmKitModule.notifyAlarmTapped(alarmID: alarmID)
 
     return .result()
   }
