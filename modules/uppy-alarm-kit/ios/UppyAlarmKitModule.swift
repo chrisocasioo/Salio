@@ -136,12 +136,25 @@ public class UppyAlarmKitModule: Module {
       metadata: UppyAlarmMetadata(label: label),
       tintColor: .uppyGold
     )
+    // AlarmKit's own alert doesn't just chime once -- on-device (iOS 26.1) its configured sound
+    // loops continuously for as long as the alert is showing, i.e. it's already a fully
+    // self-sufficient ringing alarm on its own. That used to be `.default` (Apple's generic system
+    // tone), which meant it played independently of, and simultaneously with, our own real
+    // AVAudioPlayer loop (UppyAlarmScheduler.ringPlayer) -- two different sounds overlapping the
+    // entire time the alert was up. Pointing this at the same file our own player uses (see
+    // withAlarmSoundFile.js, which places it in the app's main bundle -- AlertSound.named(_:)
+    // requires that, unlike our own player's pod-bundle lookup) means both sources play identical
+    // audio, so even though they're still two independent players, there's only one sound to hear.
+    // Named custom AlarmKit sounds have a known, still-open Apple bug on early iOS 26 builds where
+    // they can play a system error tone instead (developer.apple.com/forums/thread/802620) -- if
+    // that reproduces here, fall back to `.default` and instead suppress our own ringPlayer while
+    // AlarmManager.shared.alarmUpdates reports this alarm's state as .alerting.
     let configuration = AlarmManager.AlarmConfiguration(
       schedule: schedule,
       attributes: attributes,
       stopIntent: UppyAlarmStopIntent(alarmID: id),
       secondaryIntent: nil,
-      sound: .default
+      sound: .named("UppyAlarmTone.wav")
     )
 
     _ = try? await AlarmManager.shared.schedule(id: uuid, configuration: configuration)

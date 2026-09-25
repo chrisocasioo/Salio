@@ -70,7 +70,8 @@
             "minSdkVersion": 26
           }
         }
-      ]
+      ],
+      "./modules/uppy-alarm-kit/plugin/withAlarmSoundFile"
     ],
     "extra": {
       "eas": {
