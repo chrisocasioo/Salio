@@ -170,10 +170,14 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 16,
   },
+  // expo-camera's CameraView always scales its preview to *cover* (crop-to-fill) whatever bounds
+  // it's given on iOS -- there's no "fit"/letterbox option in its API (the `ratio` prop that would
+  // otherwise do this is Android-only). A square box crops hard against the camera sensor's native
+  // ~3:4 preview on every side; matching that ratio instead keeps the crop minimal.
   viewfinder: {
     alignSelf: 'center',
     width: 260,
-    height: 260,
+    aspectRatio: 3 / 4,
     borderRadius: radii.xxl,
     backgroundColor: colors.surface2,
     alignItems: 'center',

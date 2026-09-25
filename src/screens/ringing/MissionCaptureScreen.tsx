@@ -93,29 +93,31 @@ export function MissionCaptureScreen({
         </Pressable>
       ) : null}
 
-      <View style={styles.viewfinder}>
-        {permission?.granted ? (
-          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
-        ) : (
-          <CameraIcon size={40} color={colors.border} />
-        )}
-        <View style={[styles.corner, styles.cornerTL]} />
-        <View style={[styles.corner, styles.cornerTR]} />
-        <View style={[styles.corner, styles.cornerBL]} />
-        <View style={[styles.corner, styles.cornerBR]} />
+      <View style={styles.viewfinderWrap}>
+        <View style={styles.viewfinder}>
+          {permission?.granted ? (
+            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+          ) : (
+            <CameraIcon size={40} color={colors.border} />
+          )}
+          <View style={[styles.corner, styles.cornerTL]} />
+          <View style={[styles.corner, styles.cornerTR]} />
+          <View style={[styles.corner, styles.cornerBL]} />
+          <View style={[styles.corner, styles.cornerBR]} />
 
-        {banner ? (
-          <View
-            style={[
-              styles.banner,
-              banner.tone === 'success' && styles.bannerSuccess,
-            ]}
-          >
-            <Text style={[styles.bannerText, banner.tone === 'success' && styles.bannerTextSuccess]}>
-              {banner.text}
-            </Text>
-          </View>
-        ) : null}
+          {banner ? (
+            <View
+              style={[
+                styles.banner,
+                banner.tone === 'success' && styles.bannerSuccess,
+              ]}
+            >
+              <Text style={[styles.bannerText, banner.tone === 'success' && styles.bannerTextSuccess]}>
+                {banner.text}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <View style={styles.footer}>
@@ -166,10 +168,21 @@ const styles = StyleSheet.create({
     color: colors.inkDim,
     textDecorationLine: 'underline',
   },
-  viewfinder: {
+  // expo-camera's CameraView always scales its preview to *cover* (crop-to-fill) whatever bounds
+  // it's given on iOS -- there's no "fit"/letterbox option in its API (the `ratio` prop that would
+  // otherwise do this is Android-only). A container that stretches to fill all remaining vertical
+  // space ends up far taller/narrower than the camera sensor's native ~3:4 preview, so covering it
+  // means cropping in hard on the frame -- effectively "zoomed in" and hard to fit an object into.
+  // Constraining the box to roughly that same 3:4 ratio instead keeps the crop minimal.
+  viewfinderWrap: {
     flex: 1,
-    marginHorizontal: 20,
-    marginBottom: 16,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  viewfinder: {
+    width: '100%',
+    aspectRatio: 3 / 4,
     borderRadius: 24,
     backgroundColor: colors.surface2,
     alignItems: 'center',
