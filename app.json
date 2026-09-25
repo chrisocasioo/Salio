@@ -13,11 +13,9 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "Salio needs your camera to verify the object for a dismiss mission.",
-        "NSAlarmKitUsageDescription": "Salio uses AlarmKit to wake your locked screen when an alarm rings.",
         "UIBackgroundModes": [
           "audio"
         ],
-        "NSSupportsLiveActivities": true,
         "ITSAppUsesNonExemptEncryption": false
       },
       "buildNumber": "17"
@@ -70,8 +68,7 @@
             "minSdkVersion": 26
           }
         }
-      ],
-      "./modules/uppy-alarm-kit/plugin/withAlarmSoundFile"
+      ]
     ],
     "extra": {
       "eas": {

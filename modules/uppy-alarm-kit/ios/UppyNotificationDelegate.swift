@@ -14,6 +14,7 @@ public class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotifica
   ) -> Bool {
     UNUserNotificationCenter.current().delegate = self
     UppyAlarmScheduler.shared.armed()
+    UppyAlarmKitModule.cancelAllLegacyAlarmKitAlarms()
     return true
   }
 

@@ -5,35 +5,35 @@ import UserNotifications
 
 /// Schedules local notifications and keeps a background AVAudioSession alive (see
 /// UppyAlarmScheduler) so the alarm rings continuously and reliably through silent mode/lock
-/// screen — this remains the reliable core, and stays exactly as it was. Alongside it, best-effort,
-/// this also schedules a real AlarmKit alert for the same time: AlarmKit is the only way a
-/// third-party app can actually wake and take over a locked screen on iOS, but its alert screen is
-/// a fixed system template (no custom background) and its automatic Stop button can't be removed
-/// or relabeled — confirmed via real-device testing the first time this project used AlarmKit,
-/// which is why the notification + background-audio mechanism above was built as the real ringing
-/// screen in the first place, and remains it.
+/// screen — this is the only ringing mechanism now, and has been the reliable core throughout.
 ///
-/// The difference this time: rather than fighting the Stop button (the previous attempt re-armed a
-/// follow-up alert when it was tapped), UppyAlarmStopIntent now treats every tap as "open the app,"
-/// using `supportedModes: .foreground(.immediate)` — the replacement for the older, deprecated
-/// `openAppWhenRun`, which this project never actually tried before pivoting away from AlarmKit.
-/// AlarmKit's alert is purely a wake-and-hand-off trigger into the exact same mission-gated
-/// AlarmRingingRoot flow a notification tap already opens; it never owns the actual dismiss logic,
-/// so nothing about the no-snooze/mission design changes.
+/// This module previously also scheduled a real AlarmKit alert alongside it, best-effort, purely to
+/// wake/take over a locked screen with a native-looking alert. Removed after finding a confirmed,
+/// still-open Apple platform bug: when AlarmKit's alert renders in its compact/banner form (device
+/// unlocked, app not foregrounded -- as opposed to the full-screen form it uses on a locked screen,
+/// which worked fine), tapping its Stop control dismisses the alarm at the OS level without ever
+/// invoking our stopIntent (developer.apple.com/forums/thread/815064; reproduces in Apple's own
+/// AlarmKit sample app too). Since that intent was the only place we recorded which alarm to open
+/// and told the app to foreground, the app would never open in that case, even though the sound
+/// correctly stopped -- confirmed on a real device. There's no workaround available to us: the Stop
+/// button is mandatory on every AlarmKit alert and can't be made to skip the buggy dismissal path.
+/// Given the notification + background-audio mechanism already rings reliably through a locked
+/// screen on its own (the phone just doesn't light up on its own first -- the person has to pick it
+/// up, exactly like any alarm app before AlarmKit existed), it wasn't worth keeping a second,
+/// sometimes-broken path alongside it.
 ///
-/// AlarmKit scheduling is best-effort and never blocks or fails the call: authorization can be
-/// declined, or AlarmKit's own scheduling limits can be hit, and none of that should stop the
-/// alarm from working via the notification + background-audio mechanism alone.
+/// `import AlarmKit` and the `AlarmManager.shared.cancel/stop` calls below remain solely to clean up
+/// alarms a previous build may have already scheduled on someone's device; nothing here schedules a
+/// new one anymore. UppyAlarmKitModule.cancelAllLegacyAlarmKitAlarms() (called once at launch from
+/// UppyNotificationDelegate) sweeps up ones that would otherwise never get touched again.
 public class UppyAlarmKitModule: Module {
   // JS learns about a pending ringing alarm two ways: polling getPendingRingingAlarmId() (on
-  // mount, and on every AppState 'active' transition) and this event, sent the moment a
-  // notification/AlarmKit tap actually happens. The event exists because the polling alone has a
-  // real gap: if the app is already in the foreground when the alarm fires (e.g. phone unlocked,
-  // Salio already open) there's no background-to-active transition for AppState to catch, so
-  // nothing would ever re-check and the ringing screen would silently never appear -- confirmed as
-  // the cause of "the notification doesn't open the app" when unlocked. Both UppyNotificationDelegate
-  // and UppyAlarmStopIntent call notifyAlarmTapped so this covers a plain notification tap and an
-  // AlarmKit alert tap alike.
+  // mount, and on every AppState 'active' transition) and this event, sent by
+  // UppyNotificationDelegate the moment a notification tap actually happens. The event exists
+  // because the polling alone has a real gap: if the app is already in the foreground when the
+  // alarm fires (e.g. phone unlocked, Salio already open) there's no background-to-active
+  // transition for AppState to catch, so nothing would ever re-check and the ringing screen would
+  // silently never appear.
   private static weak var shared: UppyAlarmKitModule?
 
   public override func didCreate() {
@@ -54,10 +54,6 @@ public class UppyAlarmKitModule: Module {
           continuation.resume(returning: granted)
         }
       }
-      // Best-effort, on top of the notification permission above -- this is what lets the AlarmKit
-      // alert (scheduleAlarm below) actually wake/take over a locked screen. Declining it just
-      // means alarms keep working via the notification + background-audio mechanism alone.
-      _ = try? await AlarmManager.shared.requestAuthorization()
       return granted ? "authorized" : "denied"
     }
 
@@ -81,10 +77,6 @@ public class UppyAlarmKitModule: Module {
         forAlarmID: id, hour: hour, minute: minute, days: days, repeatOnce: repeatOnce, label: displayLabel
       )
       UppyAlarmScheduler.shared.armed()
-
-      await Self.scheduleAlarmKitAlert(
-        id: id, hour: hour, minute: minute, days: days, repeatOnce: repeatOnce, label: displayLabel
-      )
     }
 
     Function("cancelAlarm") { (id: String) in
@@ -103,10 +95,8 @@ public class UppyAlarmKitModule: Module {
 
     AsyncFunction("stopRinging") { (id: String) in
       UppyAlarmScheduler.shared.stopRinging(alarmID: id)
-      // Normally already stopped by UppyAlarmStopIntent when the AlarmKit alert's Stop button was
-      // tapped, but this path can also be reached via a plain notification tap (or if the AlarmKit
-      // alert never showed) -- stop it here too so nothing keeps counting for an already-dismissed
-      // alarm.
+      // No longer schedules a new AlarmKit alarm (see class doc comment), but a previous build's
+      // may still be pending on this device -- stop it too so it doesn't ring separately later.
       if let alarmKitID = UUID(uuidString: id) {
         try? AlarmManager.shared.stop(id: alarmKitID)
       }
@@ -121,75 +111,15 @@ public class UppyAlarmKitModule: Module {
     }
   }
 
-  private static func scheduleAlarmKitAlert(
-    id: String, hour: Int, minute: Int, days: [Int], repeatOnce: Bool, label: String
-  ) async {
-    guard let uuid = UUID(uuidString: id) else { return }
-    guard AlarmManager.shared.authorizationState == .authorized else { return }
-
-    let schedule: Alarm.Schedule
-    if repeatOnce || days.isEmpty {
-      schedule = .relative(
-        Alarm.Schedule.Relative(
-          time: Alarm.Schedule.Relative.Time(hour: hour, minute: minute),
-          repeats: .never
-        )
-      )
-    } else {
-      // Our model's days are 0 (Sunday) ... 6 (Saturday); Locale.Weekday's ordering follows the
-      // same Sunday-first convention.
-      let weekdays: [Locale.Weekday] = days.compactMap { weekday(fromModelDay: $0) }
-      schedule = .relative(
-        Alarm.Schedule.Relative(
-          time: Alarm.Schedule.Relative.Time(hour: hour, minute: minute),
-          repeats: .weekly(weekdays)
-        )
-      )
-    }
-
-    // No secondary button: a single automatic Stop button that hands off into the app's own
-    // mission-gated flow (see UppyAlarmStopIntent) covers both mission and no-mission alarms, since
-    // AlarmRingingRoot already branches on that once opened -- nothing here needs to know which.
-    let alert = AlarmPresentation.Alert(title: LocalizedStringResource(stringLiteral: label))
-    let attributes = AlarmAttributes<UppyAlarmMetadata>(
-      presentation: AlarmPresentation(alert: alert),
-      metadata: UppyAlarmMetadata(label: label),
-      tintColor: .uppyGold
-    )
-    // AlarmKit's own alert doesn't just chime once -- on-device (iOS 26.1) its configured sound
-    // loops continuously for as long as the alert is showing, i.e. it's already a fully
-    // self-sufficient ringing alarm on its own. That used to be `.default` (Apple's generic system
-    // tone), which meant it played independently of, and simultaneously with, our own real
-    // AVAudioPlayer loop (UppyAlarmScheduler.ringPlayer) -- two different sounds overlapping the
-    // entire time the alert was up. Pointing this at the same file our own player uses (see
-    // withAlarmSoundFile.js, which places it in the app's main bundle -- AlertSound.named(_:)
-    // requires that, unlike our own player's pod-bundle lookup) means both sources play identical
-    // audio, so even though they're still two independent players, there's only one sound to hear.
-    // Named custom AlarmKit sounds have a known, still-open Apple bug on early iOS 26 builds where
-    // they can play a system error tone instead (developer.apple.com/forums/thread/802620) -- if
-    // that reproduces here, fall back to `.default` and instead suppress our own ringPlayer while
-    // AlarmManager.shared.alarmUpdates reports this alarm's state as .alerting.
-    let configuration = AlarmManager.AlarmConfiguration(
-      schedule: schedule,
-      attributes: attributes,
-      stopIntent: UppyAlarmStopIntent(alarmID: id),
-      secondaryIntent: nil,
-      sound: .named("UppyAlarmTone.wav")
-    )
-
-    _ = try? await AlarmManager.shared.schedule(id: uuid, configuration: configuration)
-  }
-
-  private static func weekday(fromModelDay day: Int) -> Locale.Weekday? {
-    switch day {
-    case 0: return .sunday
-    case 1: return .monday
-    case 2: return .tuesday
-    case 3: return .wednesday
-    case 4: return .thursday
-    case 5: return .friday
-    case 6: return .saturday
-    default: return nil
+  /// One-time migration cleanup, called from UppyNotificationDelegate at launch: a build before
+  /// this one may have scheduled a real AlarmKit alarm (with a stopIntent type that no longer
+  /// exists in this binary) for any currently-armed alarm, and since scheduleAlarm's own
+  /// overwrite-cleanup only runs when an alarm is next edited, one that's never touched again would
+  /// otherwise sit there indefinitely. Cheap and safe to call unconditionally on every launch.
+  static func cancelAllLegacyAlarmKitAlarms() {
+    for id in UppyAlarmStore.armedAlarmIDs() {
+      guard let uuid = UUID(uuidString: id) else { continue }
+      try? AlarmManager.shared.cancel(id: uuid)
     }
   }
 }
