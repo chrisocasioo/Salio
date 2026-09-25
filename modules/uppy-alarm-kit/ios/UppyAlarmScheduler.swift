@@ -108,6 +108,29 @@ final class UppyAlarmScheduler {
     player?.play()
   }
 
+  /// Called from UppyAlarmStopIntent once AlarmKit hands off to the app. In practice our own
+  /// `checkDue()` poll (running every ~5s the whole time an alarm is armed) almost always notices
+  /// the alarm is due and calls startRinging — starting the real AVAudioSession + ringPlayer —
+  /// before the person notices AlarmKit's lock-screen alert and taps its Stop button. That means
+  /// `startRinging`'s own "already ringing, nothing to do" guard would silently no-op here. But
+  /// ending AlarmKit's own alert (which has its own `sound: .default` playing) deactivates the one
+  /// shared AVAudioSession per process as a side effect of the system's own Stop-button handling —
+  /// this happens regardless of whether this app calls AlarmManager.shared.stop(id:) itself — so
+  /// skipping re-activation here left our ringPlayer silenced with nothing to revive it (confirmed
+  /// on a real device: the alarm sound still stopped even after removing this app's own stop(id:)
+  /// call from the intent). Reactivating the session and resuming playback unconditionally, instead
+  /// of routing through startRinging's guard, covers this ordering; the rarer case where our own
+  /// poll hasn't caught up yet still falls through to a normal startRinging.
+  func resumeRingingAfterAlarmKitHandoff(alarmID id: String, repeatOnce: Bool) {
+    guard UppyAlarmStore.currentlyRingingAlarmID() == id else {
+      startRinging(alarmID: id, repeatOnce: repeatOnce)
+      return
+    }
+    activateSession(mixWithOthers: false)
+    forceMaxVolume()
+    ringPlayer?.play()
+  }
+
   /// Called once the mission (or Emergency Escape) completes inside the app.
   func stopRinging(alarmID id: String) {
     guard UppyAlarmStore.currentlyRingingAlarmID() == id else {
