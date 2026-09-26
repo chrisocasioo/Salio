@@ -30,6 +30,12 @@ export const ja: typeof en = {
     weekend: '土日',
   },
   onboarding: {
+    noticeTitle: 'はじめる前に',
+    noticeSubtitle: 'アラームを確実に鳴らすために、知っておいてほしいことが2つあります。',
+    noticeBackgroundTitle: 'Salioを起動したままにする',
+    noticeBackgroundDescription: 'アラームを鳴らすには、アプリをバックグラウンドで起動したままにしておく必要があります。',
+    noticeVolumeTitle: '音量を上げる',
+    noticeVolumeDescription: 'アラームを鳴らすには、音量を上げておく必要があります。',
     title: 'Salioへようこそ',
     subtitle:
       'マナーモードやロック画面でもアラームが確実に鳴るように、いくつかの許可が必要です。',

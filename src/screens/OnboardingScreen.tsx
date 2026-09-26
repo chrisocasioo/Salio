@@ -2,7 +2,7 @@ import { useCameraPermissions } from 'expo-camera';
 import React, { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AlarmClockIcon, CameraIcon, CheckIcon } from '../components/icons';
+import { AlarmClockIcon, CameraIcon, CheckIcon, SoundWaveIcon } from '../components/icons';
 import { GoldButton } from '../components/GoldButton';
 import { t } from '../i18n';
 import {
@@ -20,6 +20,12 @@ const isAndroid = Platform.OS === 'android';
 const androidSdkInt = isAndroid ? (Platform.Version as number) : 0;
 
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
+  // iOS only: both limitations below (background-only reliability, no way to force the media
+  // volume up -- see UppyAlarmScheduler.swift's top doc comment) are specific to iOS's
+  // AVAudioPlayer-based ringing mechanism. Android's alarms are scheduled via AlarmManager (which
+  // survives a force-quit) and ring on the dedicated STREAM_ALARM audio stream (unaffected by
+  // media volume), so surfacing this notice there would just be inaccurate.
+  const [step, setStep] = useState<'notice' | 'permissions'>(Platform.OS === 'ios' ? 'notice' : 'permissions');
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [alarmsGranted, setAlarmsGranted] = useState(false);
   const [notificationsGranted, setNotificationsGranted] = useState(false);
@@ -36,6 +42,35 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
     await requestNotificationPermission();
     setNotificationsGranted(true);
   };
+
+  if (step === 'notice') {
+    return (
+      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.logoBadge}>
+            <AlarmClockIcon size={26} color={colors.gold} />
+          </View>
+          <Text style={styles.title}>{t('onboarding.noticeTitle')}</Text>
+          <Text style={styles.subtitle}>{t('onboarding.noticeSubtitle')}</Text>
+
+          <NoticeRow
+            icon={<AlarmClockIcon size={18} color={colors.gold} />}
+            title={t('onboarding.noticeBackgroundTitle')}
+            description={t('onboarding.noticeBackgroundDescription')}
+          />
+          <NoticeRow
+            icon={<SoundWaveIcon size={18} color={colors.gold} />}
+            title={t('onboarding.noticeVolumeTitle')}
+            description={t('onboarding.noticeVolumeDescription')}
+          />
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <GoldButton label={t('onboarding.continueButton')} onPress={() => setStep('permissions')} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -101,6 +136,26 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         <GoldButton label={t('onboarding.continueButton')} onPress={onDone} />
       </View>
     </SafeAreaView>
+  );
+}
+
+function NoticeRow({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowIcon}>{icon}</View>
+      <View style={styles.rowText}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={styles.rowDescription}>{description}</Text>
+      </View>
+    </View>
   );
 }
 

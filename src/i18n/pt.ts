@@ -30,6 +30,12 @@ export const pt: typeof en = {
     weekend: 'Sáb, Dom',
   },
   onboarding: {
+    noticeTitle: 'Antes de começar',
+    noticeSubtitle: 'Duas coisas para saber para que seus alarmes realmente toquem.',
+    noticeBackgroundTitle: 'Mantenha o Salio aberto',
+    noticeBackgroundDescription: 'O app precisa permanecer aberto em segundo plano para que os alarmes funcionem.',
+    noticeVolumeTitle: 'Aumente o volume',
+    noticeVolumeDescription: 'O volume precisa estar aumentado para que os alarmes toquem.',
     title: 'Bem-vindo ao Salio',
     subtitle:
       'Algumas permissões para que seus alarmes toquem de forma confiável, mesmo no modo silencioso e com a tela bloqueada.',

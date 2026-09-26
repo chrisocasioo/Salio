@@ -15,17 +15,26 @@ import UserNotifications
 /// and the way a colder app (e.g. evicted by the OS for memory) gets reopened at all.
 ///
 /// Verified against gdelataillade/alarm, an open-source, App-Store-approved Flutter alarm plugin
-/// using this exact silent-AVAudioPlayer keep-alive technique — not something invented here. Two
-/// things that plugin also has to handle, and this now does too: registerForInterruptions()
-/// resumes playback after anything (a call, Siri, ...) pauses it — without this the keep-alive
-/// session could go silently dead hours before an alarm is even due — and forceMaxVolume() raises
-/// the system (media) volume while ringing, since `.playback` category audio still plays at
-/// whatever that volume happens to be, only the physical mute switch is bypassed automatically.
+/// using this exact silent-AVAudioPlayer keep-alive technique — not something invented here. One
+/// thing that plugin also has to handle, and this now does too: registerForInterruptions() resumes
+/// playback after anything (a call, Siri, ...) pauses it — without this the keep-alive session
+/// could go silently dead hours before an alarm is even due.
 ///
-/// Known limitation shared by any non-AlarmKit approach (including, per that plugin's own docs):
-/// force-quitting the app or restarting the device stops alarms from ringing until the app is
-/// reopened once, since nothing can survive that on iOS. refreshForceQuitWarning() surfaces that
-/// to the person exactly when it happens, rather than as an upfront onboarding disclaimer.
+/// Known limitations, both shared by any non-AlarmKit approach and surfaced up front in
+/// onboarding (see OnboardingScreen.tsx) rather than discovered the hard way:
+/// - Force-quitting the app or restarting the device stops alarms from ringing until the app is
+///   reopened once, since nothing can survive that on iOS. refreshForceQuitWarning() also
+///   surfaces this again in the moment it actually happens.
+/// - `.playback` category audio bypasses the physical mute switch automatically, but still plays
+///   at whatever the phone's media volume happens to be -- there is no supported, reliable public
+///   API to programmatically raise iOS's system volume from an arbitrary starting point (confirmed
+///   via multiple independent sources, including Apple's own DTS engineers on their developer
+///   forums; two earlier attempts at forcing it to max here never actually worked on a real
+///   device). pinRingingVolume()/reassertPinnedVolumeIfNeeded() below instead match what
+///   gdelataillade/alarm's own `volumeEnforced` option actually does, once its real documented
+///   semantics were checked properly: protect whatever level was already present when ringing
+///   started (resisting it being turned down mid-ring), rather than replacing it -- and explicitly
+///   leave an already-muted phone alone rather than trying to unmute it.
 final class UppyAlarmScheduler {
   static let shared = UppyAlarmScheduler()
   private init() {}
@@ -100,7 +109,7 @@ final class UppyAlarmScheduler {
 
     keepAlivePlayer?.stop()
     activateSession(mixWithOthers: false)
-    forceMaxVolume()
+    pinRingingVolume()
     let player = ringPlayer ?? loadPlayer(resource: "UppyAlarmTone")
     ringPlayer = player
     player?.numberOfLoops = -1
@@ -119,7 +128,7 @@ final class UppyAlarmScheduler {
     ringPlayer?.stop()
     UppyAlarmStore.setCurrentlyRingingAlarmID(nil)
     UppyAlarmStore.clearPendingRingingAlarmID()
-    restorePreviousVolume()
+    clearPinnedVolume()
     armed()
   }
 
@@ -149,7 +158,7 @@ final class UppyAlarmScheduler {
     }
     if UppyAlarmStore.currentlyRingingAlarmID() != nil {
       activateSession(mixWithOthers: false)
-      forceMaxVolume()
+      reassertPinnedVolumeIfNeeded()
       ringPlayer?.play()
     } else {
       keepAlivePlayer = nil // force a fresh player/session rather than assume the old one is still valid
@@ -157,59 +166,50 @@ final class UppyAlarmScheduler {
     }
   }
 
-  /// The system volume level from just before the first forceMaxVolume() call of the current
-  /// ringing session, so restorePreviousVolume() can put it back once the alarm is dismissed
-  /// rather than leaving the phone maxed out. nil whenever no alarm is currently ringing.
-  private var volumeBeforeRinging: Float?
+  /// The system volume level read the moment the current ringing session started, so it can be
+  /// re-asserted if it's since been turned down (see reassertPinnedVolumeIfNeeded) and cleared once
+  /// the alarm is dismissed. nil whenever no alarm is currently ringing.
+  private var pinnedRingingVolume: Float?
 
-  /// Real alarm-clock reliability needs the alarm audible regardless of whatever the phone's
-  /// current media volume happens to be — `.playback` category audio still plays at that volume
-  /// level, it only bypasses the physical mute switch. This forces the system volume up via the
-  /// standard MPVolumeView slider technique, the same kind of fix the reference plugin's own
-  /// `volumeEnforced` option makes ("with no volume the target is getSystemVolume()... resets the
-  /// system volume... whenever it drifts").
-  private func forceMaxVolume() {
-    DispatchQueue.main.async {
-      // Guarded so a later call (e.g. resuming after an interruption mid-ring) doesn't overwrite
-      // the real pre-alarm level with the already-maxed one.
-      if self.volumeBeforeRinging == nil {
-        self.volumeBeforeRinging = AVAudioSession.sharedInstance().outputVolume
-      }
-      self.setSystemVolume(1.0)
-    }
+  /// Reads and pins the current system volume the instant ringing starts. Does NOT attempt to
+  /// raise it -- see this file's top doc comment for why forcing an arbitrary/muted volume up
+  /// isn't something iOS supports. A muted phone is deliberately left alone here (matching
+  /// gdelataillade/alarm's own documented behavior); this only ever protects a level that was
+  /// already audible.
+  private func pinRingingVolume() {
+    guard pinnedRingingVolume == nil else { return } // don't clobber the real baseline on a later call
+    pinnedRingingVolume = AVAudioSession.sharedInstance().outputVolume
   }
 
-  /// Called from UppyNotificationDelegate.applicationDidBecomeActive, in case an alarm is already
-  /// ringing -- e.g. the person just opened the app from the lock-screen notification. Opening the
-  /// app always produces a real, attached window, so this gives forceMaxVolume() a guaranteed
-  /// second chance to actually take effect if its first attempt (from the background poller, phone
-  /// possibly still locked) silently found no window to work with. volumeBeforeRinging's own nil
-  /// guard means this never clobbers the real pre-alarm level with the already-maxed one.
-  func reassertVolumeIfRinging() {
-    guard UppyAlarmStore.currentlyRingingAlarmID() != nil else { return }
-    forceMaxVolume()
+  /// Called both from the poll timer while ringing (~every 5s, so a person quietly turning the
+  /// volume down mid-ring gets caught reasonably quickly) and from
+  /// UppyNotificationDelegate.applicationDidBecomeActive (opening the app always produces a real
+  /// window, which setSystemVolume needs and the background poll's attempt may not have had). No
+  /// effect if the pinned level was already 0 -- a muted phone is left alone, not un-muted.
+  func reassertPinnedVolumeIfNeeded() {
+    guard let pinned = pinnedRingingVolume, pinned > 0 else { return }
+    guard AVAudioSession.sharedInstance().outputVolume < pinned else { return }
+    setSystemVolume(pinned)
   }
 
-  /// Undoes forceMaxVolume() once the alarm is actually dismissed, so the next thing the person
-  /// plays (music, a video) isn't blasted at full volume just because the alarm needed to be.
-  private func restorePreviousVolume() {
-    guard let previous = volumeBeforeRinging else { return }
-    volumeBeforeRinging = nil
-    DispatchQueue.main.async {
-      self.setSystemVolume(previous)
-    }
+  private func clearPinnedVolume() {
+    pinnedRingingVolume = nil
   }
 
-  /// Two real failure modes here, both silent: this needs a live, attached app window to hang the
-  /// hidden MPVolumeView off of, which may not exist yet the first time this runs -- the alarm
-  /// firing while the app is only in the background with the phone locked, before the person has
-  /// opened anything (confirmed as the cause of the alarm playing at whatever volume the phone
-  /// already had, never actually maxed, on a real device). And MPVolumeView creates its internal
-  /// UISlider lazily during layout, so looking for it in the same run loop turn as addSubview can
-  /// find nothing even when a window IS available. reassertVolumeIfRinging() covers the first case
-  /// by giving this another guaranteed-window attempt once the app is actually opened;
-  /// layoutIfNeeded() below covers the second.
+  /// Needs a live, attached app window to hang the hidden MPVolumeView off of, which may not exist
+  /// yet the first time this runs while the phone is still locked -- reassertPinnedVolumeIfNeeded's
+  /// poll-timer + applicationDidBecomeActive call sites both exist to give this repeated chances.
+  /// MPVolumeView also creates its internal UISlider lazily during layout, hence layoutIfNeeded()
+  /// before searching for it.
   private func setSystemVolume(_ value: Float) {
+    // Touches UIKit (the window, an MPVolumeView) -- always dispatch rather than rely on every
+    // call site already being on the main thread.
+    DispatchQueue.main.async { [weak self] in
+      self?.setSystemVolumeOnMainThread(value)
+    }
+  }
+
+  private func setSystemVolumeOnMainThread(_ value: Float) {
     guard let window = UIApplication.shared.connectedScenes
       .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
       .first
@@ -239,6 +239,7 @@ final class UppyAlarmScheduler {
     let timer = Timer(timeInterval: 5, repeats: true) { [weak self] _ in
       self?.checkDue()
       self?.refreshForceQuitWarning()
+      self?.reassertPinnedVolumeIfNeeded()
     }
     RunLoop.main.add(timer, forMode: .common)
     pollTimer = timer

@@ -28,6 +28,12 @@ export const en = {
     weekend: 'Sat, Sun',
   },
   onboarding: {
+    noticeTitle: 'Before You Begin',
+    noticeSubtitle: 'Two things to know so your alarms actually go off.',
+    noticeBackgroundTitle: 'Keep Salio Running',
+    noticeBackgroundDescription: 'The app must stay open in the background for alarms to work.',
+    noticeVolumeTitle: 'Turn Your Volume Up',
+    noticeVolumeDescription: 'Volume must be turned up for alarms to sound.',
     title: 'Welcome to Salio',
     subtitle:
       'A few permissions so your alarms ring reliably, even through silent mode and a locked screen.',

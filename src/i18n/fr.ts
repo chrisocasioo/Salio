@@ -30,6 +30,12 @@ export const fr: typeof en = {
     weekend: 'Sam, Dim',
   },
   onboarding: {
+    noticeTitle: 'Avant de commencer',
+    noticeSubtitle: 'Deux choses à savoir pour que vos alarmes sonnent vraiment.',
+    noticeBackgroundTitle: 'Gardez Salio ouvert',
+    noticeBackgroundDescription: 'L’application doit rester ouverte en arrière-plan pour que les alarmes fonctionnent.',
+    noticeVolumeTitle: 'Montez le volume',
+    noticeVolumeDescription: 'Le volume doit être monté pour que les alarmes sonnent.',
     title: 'Bienvenue sur Salio',
     subtitle:
       'Quelques autorisations pour que vos alarmes sonnent de manière fiable, même en mode silencieux et écran verrouillé.',

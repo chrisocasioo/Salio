@@ -30,6 +30,12 @@ export const es: typeof en = {
     weekend: 'Sáb, Dom',
   },
   onboarding: {
+    noticeTitle: 'Antes de empezar',
+    noticeSubtitle: 'Dos cosas que debes saber para que tus alarmas realmente suenen.',
+    noticeBackgroundTitle: 'Mantén Salio abierto',
+    noticeBackgroundDescription: 'La app debe permanecer abierta en segundo plano para que las alarmas funcionen.',
+    noticeVolumeTitle: 'Sube el volumen',
+    noticeVolumeDescription: 'El volumen debe estar subido para que las alarmas suenen.',
     title: 'Bienvenido a Salio',
     subtitle:
       'Algunos permisos para que tus alarmas suenen de forma confiable, incluso en modo silencioso y con la pantalla bloqueada.',
