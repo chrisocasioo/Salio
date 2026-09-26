@@ -179,6 +179,17 @@ final class UppyAlarmScheduler {
     }
   }
 
+  /// Called from UppyNotificationDelegate.applicationDidBecomeActive, in case an alarm is already
+  /// ringing -- e.g. the person just opened the app from the lock-screen notification. Opening the
+  /// app always produces a real, attached window, so this gives forceMaxVolume() a guaranteed
+  /// second chance to actually take effect if its first attempt (from the background poller, phone
+  /// possibly still locked) silently found no window to work with. volumeBeforeRinging's own nil
+  /// guard means this never clobbers the real pre-alarm level with the already-maxed one.
+  func reassertVolumeIfRinging() {
+    guard UppyAlarmStore.currentlyRingingAlarmID() != nil else { return }
+    forceMaxVolume()
+  }
+
   /// Undoes forceMaxVolume() once the alarm is actually dismissed, so the next thing the person
   /// plays (music, a video) isn't blasted at full volume just because the alarm needed to be.
   private func restorePreviousVolume() {
@@ -189,6 +200,15 @@ final class UppyAlarmScheduler {
     }
   }
 
+  /// Two real failure modes here, both silent: this needs a live, attached app window to hang the
+  /// hidden MPVolumeView off of, which may not exist yet the first time this runs -- the alarm
+  /// firing while the app is only in the background with the phone locked, before the person has
+  /// opened anything (confirmed as the cause of the alarm playing at whatever volume the phone
+  /// already had, never actually maxed, on a real device). And MPVolumeView creates its internal
+  /// UISlider lazily during layout, so looking for it in the same run loop turn as addSubview can
+  /// find nothing even when a window IS available. reassertVolumeIfRinging() covers the first case
+  /// by giving this another guaranteed-window attempt once the app is actually opened;
+  /// layoutIfNeeded() below covers the second.
   private func setSystemVolume(_ value: Float) {
     guard let window = UIApplication.shared.connectedScenes
       .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
@@ -198,6 +218,7 @@ final class UppyAlarmScheduler {
     }
     let volumeView = MPVolumeView(frame: CGRect(x: -1000, y: -1000, width: 1, height: 1))
     window.addSubview(volumeView)
+    volumeView.layoutIfNeeded()
     if let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider {
       slider.value = value
     }

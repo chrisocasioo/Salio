@@ -20,6 +20,7 @@ public class UppyNotificationDelegate: ExpoAppDelegateSubscriber, UNUserNotifica
 
   public func applicationDidBecomeActive(_ application: UIApplication) {
     UppyAlarmScheduler.shared.armed()
+    UppyAlarmScheduler.shared.reassertVolumeIfRinging()
   }
 
   public func userNotificationCenter(
