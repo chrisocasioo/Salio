@@ -26,6 +26,12 @@ import UserNotifications
 /// alarms a previous build may have already scheduled on someone's device; nothing here schedules a
 /// new one anymore. UppyAlarmKitModule.cancelAllLegacyAlarmKitAlarms() (called once at launch from
 /// UppyNotificationDelegate) sweeps up ones that would otherwise never get touched again.
+///
+/// The deployment target dropped back to 16.4 (Expo SDK 57's own floor) once AlarmKit was no
+/// longer being scheduled -- 26.1 only existed here for AlarmKit in the first place. AlarmKit
+/// itself still doesn't exist below iOS 26, so every `AlarmManager` call below is gated behind
+/// `#available(iOS 26.0, *)`; on an older device they're simply skipped, which is correct since
+/// there could never have been an AlarmKit alarm scheduled there to clean up anyway.
 public class UppyAlarmKitModule: Module {
   // JS learns about a pending ringing alarm two ways: polling getPendingRingingAlarmId() (on
   // mount, and on every AppState 'active' transition) and this event, sent by
@@ -64,7 +70,7 @@ public class UppyAlarmKitModule: Module {
       let oldDays = UppyAlarmStore.days(forAlarmID: id)
       let oldRepeatOnce = UppyAlarmStore.repeatOnce(forAlarmID: id)
       UppyAlarmScheduler.shared.removeNotifications(forAlarmID: id, days: oldDays, repeatOnce: oldRepeatOnce)
-      if let oldAlarmKitID = UUID(uuidString: id) {
+      if #available(iOS 26.0, *), let oldAlarmKitID = UUID(uuidString: id) {
         try? AlarmManager.shared.cancel(id: oldAlarmKitID)
       }
 
@@ -86,7 +92,7 @@ public class UppyAlarmKitModule: Module {
       if UppyAlarmStore.currentlyRingingAlarmID() == id {
         UppyAlarmScheduler.shared.stopRinging(alarmID: id)
       }
-      if let alarmKitID = UUID(uuidString: id) {
+      if #available(iOS 26.0, *), let alarmKitID = UUID(uuidString: id) {
         try? AlarmManager.shared.cancel(id: alarmKitID)
       }
       UppyAlarmStore.clearAlarm(forAlarmID: id)
@@ -97,7 +103,7 @@ public class UppyAlarmKitModule: Module {
       UppyAlarmScheduler.shared.stopRinging(alarmID: id)
       // No longer schedules a new AlarmKit alarm (see class doc comment), but a previous build's
       // may still be pending on this device -- stop it too so it doesn't ring separately later.
-      if let alarmKitID = UUID(uuidString: id) {
+      if #available(iOS 26.0, *), let alarmKitID = UUID(uuidString: id) {
         try? AlarmManager.shared.stop(id: alarmKitID)
       }
     }
@@ -117,6 +123,7 @@ public class UppyAlarmKitModule: Module {
   /// overwrite-cleanup only runs when an alarm is next edited, one that's never touched again would
   /// otherwise sit there indefinitely. Cheap and safe to call unconditionally on every launch.
   static func cancelAllLegacyAlarmKitAlarms() {
+    guard #available(iOS 26.0, *) else { return } // AlarmKit never existed pre-26 -- nothing to clean up
     for id in UppyAlarmStore.armedAlarmIDs() {
       guard let uuid = UUID(uuidString: id) else { continue }
       try? AlarmManager.shared.cancel(id: uuid)
