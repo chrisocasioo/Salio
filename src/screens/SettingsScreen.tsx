@@ -10,9 +10,9 @@ import { colors, fonts, radii } from '../theme/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-const PRIVACY_URL = 'https://chrisocasioo.github.io/Uppy-Legal/privacy.html';
-const SUPPORT_URL = 'https://chrisocasioo.github.io/Uppy-Legal/support.html';
-const TERMS_URL = 'https://chrisocasioo.github.io/Uppy-Legal/terms.html';
+const PRIVACY_URL = 'https://chrisocasioo.github.io/Salio-Legal/privacy.html';
+const SUPPORT_URL = 'https://chrisocasioo.github.io/Salio-Legal/support.html';
+const TERMS_URL = 'https://chrisocasioo.github.io/Salio-Legal/terms.html';
 const SUPPORT_EMAIL = 'Santrico.support@gmail.com';
 
 async function openLink(url: string) {
