@@ -3,7 +3,7 @@ import type { CustomObject } from '../types/alarm';
 
 const SIMILARITY_THRESHOLD = 0.7;
 
-export function cosineSimilarity(a: number[], b: number[]): number {
+function cosineSimilarity(a: number[], b: number[]): number {
   let dot = 0;
   let normA = 0;
   let normB = 0;

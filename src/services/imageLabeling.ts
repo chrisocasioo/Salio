@@ -4,7 +4,7 @@ export type ImageLabel = { text: string; confidence: number };
 
 // An object detector's per-box scores run lower than a whole-image labeler's: a correctly detected
 // fork/spoon/toothbrush routinely scores 0.25-0.4, so a 0.4 bar rejected real matches.
-export const CONFIDENCE_THRESHOLD = 0.25;
+const CONFIDENCE_THRESHOLD = 0.25;
 
 // A handful of the label vocabulary (MediaPipe's Object Detector -- COCO's 80 class names)
 // doesn't exactly match our pool's display names (e.g. "Bag" often reads as "Baggage" or
@@ -49,19 +49,11 @@ function containsWholeWord(haystack: string, needle: string): boolean {
   return new RegExp(`(^|[^a-z])${escaped}($|[^a-z])`).test(haystack);
 }
 
-/** Highest confidence among detected labels that name the target (0 if none do). */
-export function matchConfidence(labels: ImageLabel[], targetKey: string, targetLabel: string): number {
-  const candidates = candidateNames(targetKey, targetLabel);
-  let best = 0;
-  for (const label of labels) {
-    const text = label.text.toLowerCase();
-    if (candidates.some((c) => containsWholeWord(text, c) || containsWholeWord(c, text))) {
-      best = Math.max(best, label.confidence);
-    }
-  }
-  return best;
-}
-
 export function matchesTarget(labels: ImageLabel[], targetKey: string, targetLabel: string): boolean {
-  return matchConfidence(labels, targetKey, targetLabel) >= CONFIDENCE_THRESHOLD;
+  const candidates = candidateNames(targetKey, targetLabel);
+  return labels.some((label) => {
+    if (label.confidence < CONFIDENCE_THRESHOLD) return false;
+    const text = label.text.toLowerCase();
+    return candidates.some((c) => containsWholeWord(text, c) || containsWholeWord(c, text));
+  });
 }

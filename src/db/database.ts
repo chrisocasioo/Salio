@@ -34,14 +34,6 @@ function getDb(): Promise<SQLite.SQLiteDatabase> {
         );
       `);
       await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS learned_embeddings (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          objectKey TEXT NOT NULL,
-          embedding TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_learned_embeddings_key ON learned_embeddings (objectKey);
-      `);
-      await db.execAsync(`
         CREATE TABLE IF NOT EXISTS settings (
           key TEXT PRIMARY KEY NOT NULL,
           value TEXT NOT NULL
@@ -188,33 +180,4 @@ export async function setSetting(key: string, value: string): Promise<void> {
      ON CONFLICT(key) DO UPDATE SET value=excluded.value;`,
     [key, value]
   );
-}
-
-export async function listLearnedEmbeddings(objectKey: string): Promise<number[][]> {
-  const db = await getDb();
-  const rows = await db.getAllAsync<{ embedding: string }>(
-    'SELECT embedding FROM learned_embeddings WHERE objectKey = ? ORDER BY id DESC;',
-    [objectKey]
-  );
-  return rows.map((r) => JSON.parse(r.embedding) as number[]);
-}
-
-/** Inserts one embedding and drops the oldest ones beyond `maxPerKey`. */
-export async function addLearnedEmbedding(objectKey: string, embedding: number[], maxPerKey: number): Promise<void> {
-  const db = await getDb();
-  await db.runAsync('INSERT INTO learned_embeddings (objectKey, embedding) VALUES (?, ?);', [
-    objectKey,
-    JSON.stringify(embedding),
-  ]);
-  await db.runAsync(
-    `DELETE FROM learned_embeddings WHERE objectKey = ? AND id NOT IN (
-       SELECT id FROM learned_embeddings WHERE objectKey = ? ORDER BY id DESC LIMIT ?
-     );`,
-    [objectKey, objectKey, maxPerKey]
-  );
-}
-
-export async function clearLearnedEmbeddings(): Promise<void> {
-  const db = await getDb();
-  await db.runAsync('DELETE FROM learned_embeddings;');
 }

@@ -5,14 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraIcon, CheckIcon } from '../../components/icons';
 import { t } from '../../i18n';
 import { matchesCustomObject } from '../../services/customObjectMatch';
-import { CONFIDENCE_THRESHOLD, labelImage, matchConfidence } from '../../services/imageLabeling';
-import {
-  LEARN_MIN_DETECTOR_CONFIDENCE,
-  WEAK_DETECTOR_SIGNAL,
-  learnFromConfirmedScan,
-  loadLearnedEmbeddings,
-  matchesLearnedObject,
-} from '../../services/learnedObjects';
+import { labelImage, matchesTarget } from '../../services/imageLabeling';
 import { colors, fonts } from '../../theme/theme';
 import type { CustomObject, DismissMission } from '../../types/alarm';
 
@@ -112,25 +105,12 @@ export function MissionCaptureScreen({
     let timeoutId: ReturnType<typeof setTimeout>;
     let consecutiveErrors = 0;
 
-    // Embeddings of past scans of this item that the detector confirmed (see learnedObjects.ts).
-    let learnedEmbeddings: number[][] = [];
-    if (mission === 'random_object') {
-      loadLearnedEmbeddings(targetKey).then((embeddings) => {
-        learnedEmbeddings = embeddings;
-      });
-    }
-
     const checkPhoto = async (uri: string): Promise<boolean> => {
       if (mission === 'custom_object' && customObject) {
         return matchesCustomObject(uri, customObject);
       }
       const labels = await labelImage(uri);
-      const confidence = matchConfidence(labels, targetKey, targetLabel);
-      if (confidence >= CONFIDENCE_THRESHOLD) {
-        if (confidence >= LEARN_MIN_DETECTOR_CONFIDENCE) void learnFromConfirmedScan(uri, targetKey);
-        return true;
-      }
-      return matchesLearnedObject(uri, learnedEmbeddings, confidence >= WEAK_DETECTOR_SIGNAL);
+      return matchesTarget(labels, targetKey, targetLabel);
     };
 
     const scanOnce = async () => {
