@@ -174,6 +174,11 @@ final class UppyAlarmScheduler {
   /// re-asserted if it's since been turned down (see reassertPinnedVolumeIfNeeded) and cleared once
   /// the alarm is dismissed. nil whenever no alarm is currently ringing.
   private var pinnedRingingVolume: Float?
+  private var volumeObservation: NSKeyValueObservation?
+  /// One hidden MPVolumeView kept alive for the whole ring, rather than a fresh one per attempt: a
+  /// new view's slider hasn't synced with the system volume yet, and tearing it down in the same
+  /// run-loop pass the value is set in can drop the change before it ever applies.
+  private var volumeView: MPVolumeView?
 
   /// Reads and pins the current system volume the instant ringing starts. Does NOT attempt to
   /// raise it -- see this file's top doc comment for why forcing an arbitrary/muted volume up
@@ -182,11 +187,18 @@ final class UppyAlarmScheduler {
   /// already audible.
   private func pinRingingVolume() {
     guard pinnedRingingVolume == nil else { return } // don't clobber the real baseline on a later call
-    pinnedRingingVolume = AVAudioSession.sharedInstance().outputVolume
+    let session = AVAudioSession.sharedInstance()
+    pinnedRingingVolume = session.outputVolume
+    // React to a volume press right away instead of waiting for the next poll tick. Fires on
+    // whatever thread the system chooses, and again when our own correction lands -- harmless,
+    // since reassertPinnedVolumeIfNeeded does nothing once the level is back at the pinned one.
+    volumeObservation = session.observe(\.outputVolume, options: [.new]) { [weak self] _, _ in
+      DispatchQueue.main.async { self?.reassertPinnedVolumeIfNeeded() }
+    }
   }
 
-  /// Called both from the poll timer while ringing (~every 5s, so a person quietly turning the
-  /// volume down mid-ring gets caught reasonably quickly) and from
+  /// Called immediately on any volume change while ringing (the outputVolume observer in
+  /// pinRingingVolume), from the poll timer as a backstop (~every 5s), and from
   /// UppyNotificationDelegate.applicationDidBecomeActive (opening the app always produces a real
   /// window, which setSystemVolume needs and the background poll's attempt may not have had). No
   /// effect if the pinned level was already 0 -- a muted phone is left alone, not un-muted.
@@ -198,6 +210,12 @@ final class UppyAlarmScheduler {
 
   private func clearPinnedVolume() {
     pinnedRingingVolume = nil
+    volumeObservation?.invalidate()
+    volumeObservation = nil
+    DispatchQueue.main.async { [weak self] in
+      self?.volumeView?.removeFromSuperview()
+      self?.volumeView = nil
+    }
   }
 
   // MARK: - Vibration fallback
@@ -244,19 +262,38 @@ final class UppyAlarmScheduler {
   }
 
   private func setSystemVolumeOnMainThread(_ value: Float) {
+    // No window while the phone is locked or the app is backgrounded -- a limit of this technique,
+    // not something to work around; the vibration fallback covers that case.
     guard let window = UIApplication.shared.connectedScenes
       .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
       .first
     else {
       return
     }
-    let volumeView = MPVolumeView(frame: CGRect(x: -1000, y: -1000, width: 1, height: 1))
-    window.addSubview(volumeView)
-    volumeView.layoutIfNeeded()
-    if let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider {
-      slider.value = value
+    let view: MPVolumeView
+    if let existing = volumeView, existing.window === window {
+      view = existing
+    } else {
+      volumeView?.removeFromSuperview()
+      view = MPVolumeView(frame: CGRect(x: -2000, y: -2000, width: 1, height: 1))
+      window.addSubview(view)
+      volumeView = view
     }
-    volumeView.removeFromSuperview()
+    view.layoutIfNeeded()
+    guard let slider = Self.findSlider(in: view) else { return }
+    // Applied on the next run-loop turn so the (possibly just-created) slider has settled.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+      slider.value = value
+      slider.sendActions(for: .valueChanged)
+    }
+  }
+
+  private static func findSlider(in view: UIView) -> UISlider? {
+    if let slider = view as? UISlider { return slider }
+    for subview in view.subviews {
+      if let found = findSlider(in: subview) { return found }
+    }
+    return nil
   }
 
   private func stopEverything() {
