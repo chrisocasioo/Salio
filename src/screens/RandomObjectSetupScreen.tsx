@@ -12,26 +12,25 @@ import { colors } from '../theme/theme';
 
 type Props = NativeStackScreenProps<EditorStackParamList, 'RandomObjectSetup'>;
 
-// Small, common household objects someone actually has to get up for — no bedside-reachable items
-// (a pillow, a clock, a water cup someone might already keep on a nightstand) and nothing too
-// vague to picture at a glance (a "bag" could be a purse, a backpack, or a trash bag; an "umbrella"
-// looks nothing like itself folded, which is the only state anyone photographs one indoors in).
-// Also picked to match generic on-device classifier vocabulary (ML Kit's bundled base
-// image-labeling model on Android, MediaPipe's Image Classifier on iOS), which overlaps with
-// widely-used object-detection label sets. Large fixed furniture/fixtures (a sink, a couch, a whole
-// shelf) are deliberately left out too: not really "objects" someone can locate and photograph up
-// close. `toilet` is the one deliberate exception to "small" — it's the single item on this list
-// structurally guaranteed to never be reachable from bed, and one of the most visually consistent
-// object-detector categories there is.
+// Common household objects someone actually has to get up for — no bedside-reachable items (a
+// pillow, a clock, a water cup someone might already keep on a nightstand) and nothing too vague
+// to picture at a glance (a "bag" could be a purse, a backpack, or a trash bag; an "umbrella" looks
+// nothing like itself folded, which is the only state anyone photographs one indoors in).
+// Every key here must be one of COCO's 80 classes (or covered by a synonym in
+// src/services/imageLabeling.ts): iOS's Object Detector can only ever output those exact names, so
+// an item outside that set (a coffee maker, a shoe, a frying pan -- all removed for exactly this
+// reason after a real-device test) can never register there. The large fixtures (`toilet`,
+// `refrigerator`, `oven`, `sink`) are deliberate: they're structurally never reachable from bed,
+// and are among the most reliably detected COCO categories.
 // `key` stays a fixed English identifier (matched against the classifier's own labels, with
 // forgiving synonym matching in src/services/imageLabeling.ts); only `name` is localized.
 export const RANDOM_OBJECT_LABELS: { key: string; name: string }[] = [
-  { key: 'coffeemaker', name: t('randomObjectSetup.items.coffeemaker') },
-  { key: 'shoe', name: t('randomObjectSetup.items.shoe') },
+  { key: 'refrigerator', name: t('randomObjectSetup.items.refrigerator') },
+  { key: 'oven', name: t('randomObjectSetup.items.oven') },
   { key: 'microwave', name: t('randomObjectSetup.items.microwave') },
   { key: 'toilet', name: t('randomObjectSetup.items.toilet') },
   { key: 'knife', name: t('randomObjectSetup.items.knife') },
-  { key: 'pan', name: t('randomObjectSetup.items.pan') },
+  { key: 'sink', name: t('randomObjectSetup.items.sink') },
   { key: 'vehicle', name: t('randomObjectSetup.items.vehicle') },
   { key: 'toothbrush', name: t('randomObjectSetup.items.toothbrush') },
   { key: 'spoon', name: t('randomObjectSetup.items.spoon') },
@@ -46,7 +45,8 @@ export const RANDOM_OBJECT_LABELS: { key: string; name: string }[] = [
 
 export function RandomObjectSetupScreen({ navigation }: Props) {
   const { draft, updateDraft } = useAlarmDraft();
-  const pool = new Set(draft.randomObjectPool);
+  const knownKeys = new Set(RANDOM_OBJECT_LABELS.map((o) => o.key));
+  const pool = new Set(draft.randomObjectPool.filter((k) => knownKeys.has(k)));
 
   const toggle = (key: string) => {
     const next = new Set(pool);

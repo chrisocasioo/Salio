@@ -91,12 +91,12 @@ export const en = {
   randomObjectSetup: {
     subtitle: '{{count}} of {{total}} selected · we’ll pick one at random when this alarm rings.',
     items: {
-      coffeemaker: 'Coffee Maker',
-      shoe: 'Shoe',
+      refrigerator: 'Refrigerator',
+      oven: 'Oven',
       microwave: 'Microwave',
       toilet: 'Toilet',
       knife: 'Knife',
-      pan: 'Frying Pan',
+      sink: 'Sink',
       vehicle: 'Vehicle',
       toothbrush: 'Toothbrush',
       spoon: 'Spoon',

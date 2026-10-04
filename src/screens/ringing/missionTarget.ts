@@ -15,10 +15,13 @@ export function pickMissionTarget(alarm: Alarm, excludeKey?: string): { key: str
     return { key: 'custom_object', label: alarm.customObject.name };
   }
   if (alarm.dismissMission === 'random_object' && alarm.randomObjectPool.length > 0) {
-    const candidates =
-      excludeKey && alarm.randomObjectPool.length > 1
-        ? alarm.randomObjectPool.filter((k) => k !== excludeKey)
-        : alarm.randomObjectPool;
+    // Alarms saved before a pool item was retired can still carry its old key; asking for an item
+    // that can no longer be matched would leave the mission impossible, so drop unknown keys (and
+    // fall back to the whole pool if that leaves nothing).
+    const known = new Set(RANDOM_OBJECT_LABELS.map((o) => o.key));
+    const valid = alarm.randomObjectPool.filter((k) => known.has(k));
+    const pool = valid.length > 0 ? valid : RANDOM_OBJECT_LABELS.map((o) => o.key);
+    const candidates = excludeKey && pool.length > 1 ? pool.filter((k) => k !== excludeKey) : pool;
     const key = candidates[Math.floor(Math.random() * candidates.length)];
     const label = RANDOM_OBJECT_LABELS.find((o) => o.key === key)?.name ?? key;
     return { key, label };
