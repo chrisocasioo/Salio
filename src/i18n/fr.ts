@@ -160,10 +160,6 @@ export const fr: typeof en = {
     openIOSSettings: 'Ouvrir les réglages iOS',
     openAppSettings: 'Ouvrir les réglages de l’application',
     permissionsSubtitle: 'Gérez les autorisations de l’appareil photo, des notifications et des alarmes',
-    aboutSection: 'À propos',
-    version: 'Version {{version}}',
-    aboutNote:
-      'Salio maintient un son de fond très discret pour que votre alarme puisse sonner même écran verrouillé. Si l’application est fermée de force depuis le sélecteur d’applications, ou si le téléphone redémarre et que l’application n’est jamais rouverte, les alarmes programmées après cela ne sonneront pas — il s’agit d’une limitation d’iOS lui-même, la même que rencontre toute application d’alarme qui ne repose pas sur les alertes intégrées d’Apple.',
     couldNotOpenLink: 'Impossible d’ouvrir le lien',
   },
 };

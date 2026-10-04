@@ -160,10 +160,6 @@ export const pt: typeof en = {
     openIOSSettings: 'Abrir ajustes do iOS',
     openAppSettings: 'Abrir ajustes do app',
     permissionsSubtitle: 'Gerencie as permissões de câmera, notificações e alarmes',
-    aboutSection: 'Sobre',
-    version: 'Versão {{version}}',
-    aboutNote:
-      'O Salio mantém um som de fundo bem baixinho para que seu alarme possa tocar mesmo com a tela bloqueada. Se você fechar o app à força pelo seletor de apps, ou o telefone reiniciar e o app nunca for reaberto, os alarmes programados depois disso não vão tocar — essa é uma limitação do próprio iOS, a mesma que qualquer app de alarme que não depende dos alertas nativos da Apple enfrenta.',
     couldNotOpenLink: 'Não foi possível abrir o link',
   },
 };

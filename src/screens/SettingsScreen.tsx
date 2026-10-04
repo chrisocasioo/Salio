@@ -69,15 +69,6 @@ export function SettingsScreen({ navigation }: Props) {
             onPress={() => Linking.openSettings()}
           />
         </View>
-
-        <SectionLabel label={t('settings.aboutSection')} />
-        <View style={styles.card}>
-          <View style={styles.aboutRow}>
-            <Text style={styles.aboutTitle}>Salio</Text>
-            <Text style={styles.aboutVersion}>{t('settings.version', { version: '1.0.0' })}</Text>
-          </View>
-          <Text style={styles.aboutNote}>{t('settings.aboutNote')}</Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -174,28 +165,5 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginLeft: 58,
-  },
-  aboutRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingTop: 14,
-  },
-  aboutTitle: {
-    fontFamily: fonts.serif,
-    fontSize: 18,
-    color: colors.ink,
-  },
-  aboutVersion: {
-    fontSize: 12,
-    color: colors.inkDim,
-  },
-  aboutNote: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.inkDim,
-    padding: 14,
-    paddingTop: 8,
   },
 });

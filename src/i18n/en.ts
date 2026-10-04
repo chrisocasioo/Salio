@@ -158,10 +158,6 @@ export const en = {
     openIOSSettings: 'Open iOS Settings',
     openAppSettings: 'Open App Settings',
     permissionsSubtitle: 'Manage camera, notifications, and alarm permissions',
-    aboutSection: 'About',
-    version: 'Version {{version}}',
-    aboutNote:
-      'Salio keeps a quiet background sound running so your alarm can ring even from a locked screen. If the app is force-quit from the app switcher, or the phone restarts and the app is never reopened, alarms scheduled after that point won’t ring — this is a limitation of iOS itself, the same one every alarm app that doesn’t rely on Apple’s built-in alerts runs into.',
     couldNotOpenLink: 'Couldn’t open link',
   },
 };

@@ -160,10 +160,6 @@ export const ja: typeof en = {
     openIOSSettings: 'iOSの設定を開く',
     openAppSettings: 'アプリの設定を開く',
     permissionsSubtitle: 'カメラ、通知、アラームの権限を管理します',
-    aboutSection: 'このアプリについて',
-    version: 'バージョン {{version}}',
-    aboutNote:
-      'Salioは、ロック画面でもアラームが鳴るよう、非常に小さなバックグラウンド音を鳴らし続けています。アプリスイッチャーからアプリを完全に終了させたり、端末を再起動して一度もアプリを開き直さなかったりすると、それ以降に設定されたアラームは鳴りません — これはiOS自体の制約であり、Apple標準のアラート機能に依存しないアラームアプリに共通する制限です。',
     couldNotOpenLink: 'リンクを開けませんでした',
   },
 };

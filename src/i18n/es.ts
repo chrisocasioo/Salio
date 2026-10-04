@@ -160,10 +160,6 @@ export const es: typeof en = {
     openIOSSettings: 'Abrir ajustes de iOS',
     openAppSettings: 'Abrir ajustes de la app',
     permissionsSubtitle: 'Administra los permisos de cámara, notificaciones y alarmas',
-    aboutSection: 'Acerca de',
-    version: 'Versión {{version}}',
-    aboutNote:
-      'Salio mantiene un sonido de fondo casi silencioso para que tu alarma pueda sonar incluso con la pantalla bloqueada. Si cierras la app por completo desde el selector de apps, o el teléfono se reinicia y nunca vuelves a abrirla, las alarmas programadas después de eso no sonarán — esto es una limitación del propio iOS, la misma que enfrenta cualquier app de alarmas que no dependa de las alertas nativas de Apple.',
     couldNotOpenLink: 'No se pudo abrir el enlace',
   },
 };
