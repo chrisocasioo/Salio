@@ -1,3 +1,4 @@
+import AudioToolbox
 import AVFoundation
 import Foundation
 import MediaPlayer
@@ -42,6 +43,7 @@ final class UppyAlarmScheduler {
   private var keepAlivePlayer: AVAudioPlayer?
   private var ringPlayer: AVAudioPlayer?
   private var pollTimer: Timer?
+  private var vibrationTimer: Timer?
   private var interruptionObserver: NSObjectProtocol?
 
   private static let forceQuitWarningID = "UppyForceQuitWarning"
@@ -115,6 +117,7 @@ final class UppyAlarmScheduler {
     player?.numberOfLoops = -1
     player?.volume = 1
     player?.play()
+    startVibrationWatch()
   }
 
   /// Called once the mission (or Emergency Escape) completes inside the app.
@@ -126,6 +129,7 @@ final class UppyAlarmScheduler {
       return
     }
     ringPlayer?.stop()
+    stopVibrationWatch()
     UppyAlarmStore.setCurrentlyRingingAlarmID(nil)
     UppyAlarmStore.clearPendingRingingAlarmID()
     clearPinnedVolume()
@@ -196,6 +200,36 @@ final class UppyAlarmScheduler {
     pinnedRingingVolume = nil
   }
 
+  // MARK: - Vibration fallback
+
+  /// At or below this media volume the alarm is effectively inaudible, so the phone vibrates
+  /// instead -- iOS gives us no way to raise the volume, but vibration needs no volume at all.
+  private static let vibrateBelowVolume: Float = 0.1
+
+  /// While ringing, pulses the vibration motor whenever the volume is down. Re-checked on every
+  /// tick, so turning the volume down mid-ring starts it and turning it back up stops it. Runs on
+  /// the same kept-alive audio session that lets the ring itself play in the background.
+  private func startVibrationWatch() {
+    vibrationTimer?.invalidate()
+    let timer = Timer(timeInterval: 1.5, repeats: true) { [weak self] _ in
+      self?.vibrateIfSoundDown()
+    }
+    RunLoop.main.add(timer, forMode: .common)
+    vibrationTimer = timer
+    vibrateIfSoundDown()
+  }
+
+  private func stopVibrationWatch() {
+    vibrationTimer?.invalidate()
+    vibrationTimer = nil
+  }
+
+  private func vibrateIfSoundDown() {
+    guard UppyAlarmStore.currentlyRingingAlarmID() != nil else { return }
+    guard AVAudioSession.sharedInstance().outputVolume < Self.vibrateBelowVolume else { return }
+    AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+  }
+
   /// Needs a live, attached app window to hang the hidden MPVolumeView off of, which may not exist
   /// yet the first time this runs while the phone is still locked -- reassertPinnedVolumeIfNeeded's
   /// poll-timer + applicationDidBecomeActive call sites both exist to give this repeated chances.
@@ -228,6 +262,7 @@ final class UppyAlarmScheduler {
   private func stopEverything() {
     pollTimer?.invalidate()
     pollTimer = nil
+    stopVibrationWatch()
     keepAlivePlayer?.stop()
     ringPlayer?.stop()
     cancelForceQuitWarning()

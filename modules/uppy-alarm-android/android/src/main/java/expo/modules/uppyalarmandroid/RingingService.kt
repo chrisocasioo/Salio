@@ -9,12 +9,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 
 /**
@@ -42,6 +48,15 @@ class RingingService : Service() {
 
   private var mediaPlayer: MediaPlayer? = null
   private var wakeLock: PowerManager.WakeLock? = null
+  private val handler = Handler(Looper.getMainLooper())
+  private var vibrating = false
+
+  private val vibrationCheck = object : Runnable {
+    override fun run() {
+      updateVibration()
+      handler.postDelayed(this, 2000)
+    }
+  }
 
   override fun onBind(intent: Intent?): IBinder? = null
 
@@ -68,6 +83,8 @@ class RingingService : Service() {
       startForeground(NOTIFICATION_ID, notification)
     }
     playSound(soundUri)
+    handler.removeCallbacks(vibrationCheck)
+    handler.post(vibrationCheck)
 
     return START_STICKY
   }
@@ -102,6 +119,44 @@ class RingingService : Service() {
         // foreground service — the vibration + full-screen UI still gets the user's attention.
       }
     }
+  }
+
+  @Suppress("DEPRECATION")
+  private fun vibrator(): Vibrator? =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
+    } else {
+      getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    }
+
+  /**
+   * Vibrates continuously while the alarm stream is at zero (the sound can't wake anyone then) and
+   * stops as soon as it's turned back up. Re-checked every couple of seconds so changing the
+   * volume mid-ring takes effect.
+   */
+  @Suppress("DEPRECATION")
+  private fun updateVibration() {
+    val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    val soundDown = audio.getStreamVolume(AudioManager.STREAM_ALARM) == 0
+    val motor = vibrator() ?: return
+    if (soundDown && !vibrating) {
+      val attributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ALARM)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+        .build()
+      // Repeats from index 0: 700ms on, 500ms off, until cancelled.
+      motor.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 700, 500), 0), attributes)
+      vibrating = true
+    } else if (!soundDown && vibrating) {
+      motor.cancel()
+      vibrating = false
+    }
+  }
+
+  private fun stopVibration() {
+    handler.removeCallbacks(vibrationCheck)
+    if (vibrating) vibrator()?.cancel()
+    vibrating = false
   }
 
   private fun buildNotification(alarmId: String, label: String, hasMission: Boolean): Notification {
@@ -153,6 +208,7 @@ class RingingService : Service() {
   }
 
   private fun stopRinging() {
+    stopVibration()
     mediaPlayer?.let {
       try {
         if (it.isPlaying) it.stop()
