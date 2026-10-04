@@ -6,9 +6,8 @@ Embedder (Custom Object, build brief Stage 5) and Object Detector (Random Object
 - `embedImage(uri: string): Promise<number[]>` — runs the bundled embedder model on a local photo
   URI and returns its embedding vector. Cosine similarity against reference embeddings is computed
   in JS (`src/services/customObjectMatch.ts`), not natively.
-- `classifyImage(uri: string): Promise<{text: string; confidence: number}[]>` — iOS's Random
-  Object detector (Android uses `@react-native-ml-kit/image-labeling` instead; see
-  `src/services/imageLabeling.ts`). Despite the name, this runs MediaPipe's Object Detector task,
+- `classifyImage(uri: string): Promise<{text: string; confidence: number}[]>` — the Random
+  Object detector, on both platforms (see `src/services/imageLabeling.ts`). Despite the name, this runs MediaPipe's Object Detector task,
   not an image classifier — see "Random Object detector model" below for why.
 
 ## Embedder model
@@ -21,10 +20,10 @@ building on this task to download and bundle). If a different embedder model is 
 replace the file at both paths and keep the filename `mobilenet_embedder.tflite`, or update the
 `setModelAssetPath` calls in `UppyAndroidModule.kt`/`UppyObjectEmbedderModule.swift` to match.
 
-## Random Object detector model (iOS only)
+## Random Object detector model
 
-`efficientdet_lite2.tflite` (`ios/` only — Android's Random Object mission doesn't use this
-module at all) is Google's own published EfficientDet-Lite2 model for the Object Detector task,
+`efficientdet_lite2.tflite` (bundled in both `android/src/main/assets/` and `ios/`, same file) is
+Google's own published EfficientDet-Lite2 model for the Object Detector task,
 downloaded from
 `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float32/1/efficientdet_lite2.tflite`
 (23,096,891 bytes, Apache 2.0, same public MediaPipe Solutions model zoo). It detects the 80 COCO

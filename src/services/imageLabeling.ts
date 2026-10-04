@@ -1,14 +1,12 @@
-import { Platform } from 'react-native';
 import UppyObjectEmbedder from '../../modules/uppy-object-embedder';
 
 export type ImageLabel = { text: string; confidence: number };
 
-// ML Kit's labeler (Android) and an object detector's per-box scores (iOS) aren't on the same scale:
-// a correctly detected fork/spoon/toothbrush routinely scores 0.25-0.4 on a detector, so the 0.4
-// bar that suits whole-image labels rejected real matches on iOS.
-const CONFIDENCE_THRESHOLD = Platform.OS === 'ios' ? 0.25 : 0.4;
+// An object detector's per-box scores run lower than a whole-image labeler's: a correctly detected
+// fork/spoon/toothbrush routinely scores 0.25-0.4, so a 0.4 bar rejected real matches.
+const CONFIDENCE_THRESHOLD = 0.25;
 
-// A handful of the label vocabulary (ML Kit on Android, MediaPipe's Object Detector on iOS)
+// A handful of the label vocabulary (MediaPipe's Object Detector -- COCO's 80 class names)
 // doesn't exactly match our pool's display names (e.g. "Bag" often reads as "Baggage" or
 // "Handbag", COCO's own official class is spelled "hair drier" not "hair dryer"). This keeps the
 // match forgiving without hardcoding every device's full label set, which varies.
@@ -33,20 +31,15 @@ function candidateNames(targetKey: string, targetLabel: string): string[] {
 }
 
 /**
- * Random Object detection. Android uses @react-native-ml-kit/image-labeling (base bundled ML Kit
- * model, ~400 broad categories). iOS uses MediaPipe's Object Detector instead (via
- * uppy-object-embedder, EfficientDet-Lite2, the 80 COCO classes) — ML Kit's iOS pod transitively
- * links GoogleToolboxForMac/GTMSessionFetcher, which collides at link time with the same symbols
- * MediaPipeTasksCommon's static graph library embeds for the Custom Object mission's Image
- * Embedder; react-native.config.js excludes ML Kit's iOS pod entirely to resolve it, so this is
- * the only way Random Object detection works on iOS.
+ * Random Object detection, on both platforms: MediaPipe's Object Detector (EfficientDet-Lite2, the
+ * 80 COCO classes) via uppy-object-embedder, which is what the pool was designed against. Android
+ * used to run @react-native-ml-kit/image-labeling instead, but that labeler's ~430-label
+ * vocabulary has no label for most of the pool (toilet, microwave, scissors, fork, knife, spoon,
+ * bowl, vase, hair dryer, toaster, toothbrush, ...), so those items could never match there. The
+ * result is a flat {text, confidence} list of every detected object's top category.
  */
 export async function labelImage(photoUri: string): Promise<ImageLabel[]> {
-  if (Platform.OS === 'ios') {
-    return UppyObjectEmbedder.classifyImage(photoUri);
-  }
-  const ImageLabeling = require('@react-native-ml-kit/image-labeling').default;
-  return ImageLabeling.label(photoUri);
+  return UppyObjectEmbedder.classifyImage(photoUri);
 }
 
 // Whole-word, not substring: "car" must not match COCO's "carrot", nor "pan" a "panda".

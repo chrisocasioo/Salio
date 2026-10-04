@@ -16,19 +16,14 @@ import UIKit
 ///   "scissors" isn't a class in it at all (no amount of threshold/synonym tuning could ever fix
 ///   that), and several others only existed as odd narrow variants ("wooden spoon", "race car").
 ///   The random object pool was always designed against COCO's 80 classes (see
-///   RandomObjectSetupScreen.tsx's own doc comment), which is what Android's ML Kit labeler
-///   roughly matches -- EfficientDet-Lite2 detects those same real 80 COCO classes, restoring the
-///   pool's original design intent on iOS without changing a single pool item. It also localizes
+///   RandomObjectSetupScreen.tsx's own doc comment) -- EfficientDet-Lite2 detects those same real
+///   80 COCO classes, restoring the pool's original design intent. It also localizes
 ///   a bounding box per detected object rather than classifying the whole frame's dominant
 ///   content, which should generally help smaller objects held up against background clutter.
-///   Android keeps using @react-native-ml-kit/image-labeling for that mission, but its iOS pod
-///   transitively links GoogleToolboxForMac/GTMSessionFetcher, and MediaPipeTasksCommon's
-///   prebuilt static graph library separately embeds its own copies of the same ObjC classes —
-///   linking both produced ~220 duplicate-symbol errors at the final link step. Consolidating
-///   iOS onto MediaPipe alone (react-native.config.js excludes the ML Kit pod on iOS) removes the
-///   conflict entirely. src/services/imageLabeling.ts dispatches to whichever one matches
-///   Platform.OS, and doesn't need to know or care that this returns detections rather than
-///   whole-frame classifications -- both come back as the same flat {text, confidence} shape.
+///   Android runs the identical detector (see its UppyObjectEmbedderModule.kt) -- it used to use
+///   @react-native-ml-kit/image-labeling, whose vocabulary lacks most of the pool.
+///   src/services/imageLabeling.ts calls this on both platforms; it returns each detected
+///   object's top category as a flat {text, confidence} list.
 ///
 /// Unlike UppyAlarmKitModule (AlarmKit, iOS 26, no Mac available to verify), every type and
 /// method here was checked against the real MediaPipeTasksVision 1.0.0 headers (ImageEmbedder,

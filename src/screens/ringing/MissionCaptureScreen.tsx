@@ -116,7 +116,7 @@ export function MissionCaptureScreen({
     const scanOnce = async () => {
       pulseCorners();
       try {
-        const photo = await cameraRef.current?.takePictureAsync({ quality: 0.4 });
+        const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
         if (cancelled) return;
         if (!photo?.uri) throw new Error('no photo uri');
 

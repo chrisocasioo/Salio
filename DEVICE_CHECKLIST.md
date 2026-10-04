@@ -58,9 +58,10 @@ earlier ones are already working.
 - [ ] Set a Random Object mission, ring the alarm, tap Start Mission, photograph a pool item —
       it's accepted. Photograph something else — it's rejected with the retry banner, and the
       alarm keeps ringing.
-- [ ] Try a few different enabled pool items and confirm ML Kit's real label vocabulary matches
-      reasonably (`src/services/imageLabeling.ts`'s synonym table is a starting guess — expand it
-      based on what labels the model actually returns on a real device for your test objects).
+- [ ] Try a few different enabled pool items and confirm the detector (MediaPipe
+      EfficientDet-Lite2, COCO's 80 classes, same on both platforms) recognizes them reliably
+      (`src/services/imageLabeling.ts`'s synonym table and confidence threshold are starting
+      guesses — tune them from what the model actually returns on a real device).
 - [ ] A disabled pool item is never the one asked for (`pickMissionTarget` only picks from
       `randomObjectPool`).
 

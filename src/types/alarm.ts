@@ -20,7 +20,7 @@ export type Alarm = {
   enabled: boolean;
   androidSoundUri: string | null; // Android only; ignored on iOS
   dismissMission: DismissMission;
-  randomObjectPool: string[]; // ML Kit label keys enabled for this alarm
+  randomObjectPool: string[]; // RANDOM_OBJECT_LABELS keys (COCO-class based) enabled for this alarm
   customObject: CustomObject | null;
 };
 

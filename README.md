@@ -18,7 +18,7 @@ screen.
 - `expo-camera` for dismiss-mission photo capture
 - `expo-localization` for the device's 12/24-hour clock setting
 - Native modules (Swift/Kotlin) for AlarmKit / AlarmManager scheduling,
-  ML Kit image labeling, and a MediaPipe Image Embedder — **these require an
+  MediaPipe object detection, and a MediaPipe Image Embedder — **these require an
   EAS dev client build; Expo Go will not run this app past Stage 0.**
 
 ## Running
@@ -124,10 +124,10 @@ the real thing, not just documentation. See its own README for details.
 - [x] **Stage 3** — Sound: Android `RingtoneManager` picker (real on-device
       alarm sounds via `listAlarmSounds`, wired in Stage 2's Kotlin module);
       iOS static "Default" row, no picker UI.
-- [x] **Stage 4** — Mission framework + Random Object (ML Kit image
-      labeling): Mission Picker and Random Object Pool (from Stage 1) now
+- [x] **Stage 4** — Mission framework + Random Object (originally ML Kit image
+      labeling, since replaced by MediaPipe's Object Detector on both platforms): Mission Picker and Random Object Pool (from Stage 1) now
       lead into a real ringing flow — "Start Mission" opens the camera,
-      runs `@react-native-ml-kit/image-labeling` (base bundled model, both
+      runs MediaPipe's Object Detector (EfficientDet-Lite2, COCO's 80 classes, both
       platforms) against the capture, and only dismisses on a confident
       match against the picked pool item; otherwise it shows a retry
       banner. Custom Object capture takes the photo but always "matches"
@@ -162,15 +162,8 @@ the real thing, not just documentation. See its own README for details.
 
 This was built in a cloud sandbox with no iOS/Android device or simulator
 attached, so stages 2 and up — which require AlarmKit, AlarmManager,
-ML Kit, and MediaPipe running on real hardware — are implemented as
+and MediaPipe running on real hardware — are implemented as
 best-effort native code against the documented APIs, verified by
 type-checking and Metro bundling only. They still need a real-device pass
 per the "Done when" checkpoints in the build brief before shipping — see
 `DEVICE_CHECKLIST.md`.
-
-`@react-native-ml-kit/image-labeling` (Stage 4) is a classic-bridge native
-module (`ReactContextBaseJavaModule` / `RCT_EXPORT_MODULE`), not yet tested
-against React Native's New Architecture per React Native Directory — RN
-0.86 talks to it through the New Architecture's backward-compatibility
-interop layer, which should work but is unverified here for the same
-reason as everything else native: no real device to run it on.
