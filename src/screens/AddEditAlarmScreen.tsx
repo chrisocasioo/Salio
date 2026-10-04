@@ -98,12 +98,14 @@ export function AddEditAlarmScreen({ navigation }: Props) {
           <View style={styles.timeCard}>
             <WheelPicker
               values={HOURS_24}
+              loop
               selectedIndex={draft.hour}
               onChange={(i) => updateDraft({ hour: i })}
             />
             <Text style={styles.colon}>:</Text>
             <WheelPicker
               values={MINUTES}
+              loop
               selectedIndex={draft.minute}
               onChange={(i) => updateDraft({ minute: i })}
             />
@@ -112,6 +114,7 @@ export function AddEditAlarmScreen({ navigation }: Props) {
           <View style={styles.timeCard}>
             <WheelPicker
               values={HOURS_12}
+              loop
               selectedIndex={to12Hour(draft.hour).hour12 - 1}
               onChange={(i) => {
                 const ampm = to12Hour(draft.hour).ampm;
@@ -121,6 +124,7 @@ export function AddEditAlarmScreen({ navigation }: Props) {
             <Text style={styles.colon}>:</Text>
             <WheelPicker
               values={MINUTES}
+              loop
               selectedIndex={draft.minute}
               onChange={(i) => updateDraft({ minute: i })}
             />
