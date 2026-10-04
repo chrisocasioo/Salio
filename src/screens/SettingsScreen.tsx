@@ -3,8 +3,9 @@ import React from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
-import { ChevronRightIcon, FileTextIcon, GearIcon, LifeBuoyIcon, MailIcon, ShieldIcon } from '../components/icons';
+import { ChevronRightIcon, FileTextIcon, GearIcon, LifeBuoyIcon, MailIcon, ShieldIcon, TargetIcon } from '../components/icons';
 import { t } from '../i18n';
+import { resetLearnedObjects } from '../services/learnedObjects';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, fonts, radii } from '../theme/theme';
 
@@ -21,6 +22,20 @@ async function openLink(url: string) {
   } catch {
     Alert.alert(t('settings.couldNotOpenLink'), url);
   }
+}
+
+function confirmResetLearnedObjects() {
+  Alert.alert(t('settings.resetLearnedConfirmTitle'), t('settings.resetLearnedConfirmMessage'), [
+    { text: t('common.cancel'), style: 'cancel' },
+    {
+      text: t('settings.resetLearnedConfirmButton'),
+      style: 'destructive',
+      onPress: async () => {
+        await resetLearnedObjects();
+        Alert.alert(t('settings.resetLearnedDoneTitle'), t('settings.resetLearnedDoneMessage'));
+      },
+    },
+  ]);
 }
 
 export function SettingsScreen({ navigation }: Props) {
@@ -67,6 +82,16 @@ export function SettingsScreen({ navigation }: Props) {
             title={Platform.OS === 'ios' ? t('settings.openIOSSettings') : t('settings.openAppSettings')}
             subtitle={t('settings.permissionsSubtitle')}
             onPress={() => Linking.openSettings()}
+          />
+        </View>
+
+        <SectionLabel label={t('settings.scannerSection')} />
+        <View style={styles.card}>
+          <Row
+            icon={<TargetIcon size={18} color={colors.gold} />}
+            title={t('settings.resetLearnedTitle')}
+            subtitle={t('settings.resetLearnedSubtitle')}
+            onPress={confirmResetLearnedObjects}
           />
         </View>
       </ScrollView>
