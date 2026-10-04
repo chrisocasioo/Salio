@@ -3,7 +3,10 @@ import UppyObjectEmbedder from '../../modules/uppy-object-embedder';
 
 export type ImageLabel = { text: string; confidence: number };
 
-const CONFIDENCE_THRESHOLD = 0.4;
+// ML Kit's labeler (Android) and an object detector's per-box scores (iOS) aren't on the same scale:
+// a correctly detected fork/spoon/toothbrush routinely scores 0.25-0.4 on a detector, so the 0.4
+// bar that suits whole-image labels rejected real matches on iOS.
+const CONFIDENCE_THRESHOLD = Platform.OS === 'ios' ? 0.25 : 0.4;
 
 // A handful of the label vocabulary (ML Kit on Android, MediaPipe's Object Detector on iOS)
 // doesn't exactly match our pool's display names (e.g. "Bag" often reads as "Baggage" or
@@ -54,7 +57,7 @@ function candidateNames(targetKey: string, targetLabel: string): string[] {
 /**
  * Random Object detection. Android uses @react-native-ml-kit/image-labeling (base bundled ML Kit
  * model, ~400 broad categories). iOS uses MediaPipe's Object Detector instead (via
- * uppy-object-embedder, EfficientDet-Lite0, the 80 COCO classes) — ML Kit's iOS pod transitively
+ * uppy-object-embedder, EfficientDet-Lite2, the 80 COCO classes) — ML Kit's iOS pod transitively
  * links GoogleToolboxForMac/GTMSessionFetcher, which collides at link time with the same symbols
  * MediaPipeTasksCommon's static graph library embeds for the Custom Object mission's Image
  * Embedder; react-native.config.js excludes ML Kit's iOS pod entirely to resolve it, so this is

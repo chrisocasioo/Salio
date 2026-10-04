@@ -23,17 +23,17 @@ replace the file at both paths and keep the filename `mobilenet_embedder.tflite`
 
 ## Random Object detector model (iOS only)
 
-`efficientdet_lite0.tflite` (`ios/` only — Android's Random Object mission doesn't use this
-module at all) is Google's own published EfficientDet-Lite0 model for the Object Detector task,
+`efficientdet_lite2.tflite` (`ios/` only — Android's Random Object mission doesn't use this
+module at all) is Google's own published EfficientDet-Lite2 model for the Object Detector task,
 downloaded from
-`https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float32/1/efficientdet_lite0.tflite`
-(13,836,895 bytes, Apache 2.0, same public MediaPipe Solutions model zoo). It detects the 80 COCO
+`https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float32/1/efficientdet_lite2.tflite`
+(23,096,891 bytes, Apache 2.0, same public MediaPipe Solutions model zoo). It detects the 80 COCO
 classes, which is what the Random Object pool (`RandomObjectSetupScreen.tsx`) was designed
 against — this replaced an EfficientNet-Lite0 *image classifier* (`efficientnet_lite0.tflite`,
 now removed) that classified the whole frame over the 1000 ImageNet classes instead, a materially
 different and worse-matching vocabulary discovered after real-device testing found common pool
 items (e.g. scissors — not an ImageNet class at all) never registered. If a different detector
-model is swapped in later, keep the filename `efficientdet_lite0.tflite` or update the
+model is swapped in later (Lite0 -> Lite2 was done after a real-device test where only 5 of 16 pool items registered; Lite2 takes a 448x448 input vs Lite0's 320x320, which matters for small items like forks and toothbrushes), keep the filename `efficientdet_lite2.tflite` or update the
 `modelAssetPath` lookup in `UppyObjectEmbedderModule.swift` to match, and re-verify its output
 label set still lines up with the pool.
 

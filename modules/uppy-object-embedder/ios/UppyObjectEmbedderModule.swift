@@ -9,7 +9,7 @@ import UIKit
 ///   2-3 reference embeddings captured at registration is computed in JS
 ///   (src/services/customObjectMatch.ts) — a plain dot-product/norm calculation doesn't need a
 ///   native round trip.
-/// - Object Detector (EfficientDet-Lite0, efficientdet_lite0.tflite) is iOS's Random Object
+/// - Object Detector (EfficientDet-Lite2, efficientdet_lite2.tflite) is iOS's Random Object
 ///   detector. Previously an Image Classifier (EfficientNet-Lite0, whole-frame classification
 ///   over the 1000 ImageNet classes) -- switched after a real-device report that common pool
 ///   items (scissors, a spoon) never registered. Checked the actual ImageNet-1000 label list:
@@ -17,7 +17,7 @@ import UIKit
 ///   that), and several others only existed as odd narrow variants ("wooden spoon", "race car").
 ///   The random object pool was always designed against COCO's 80 classes (see
 ///   RandomObjectSetupScreen.tsx's own doc comment), which is what Android's ML Kit labeler
-///   roughly matches -- EfficientDet-Lite0 detects those same real 80 COCO classes, restoring the
+///   roughly matches -- EfficientDet-Lite2 detects those same real 80 COCO classes, restoring the
 ///   pool's original design intent on iOS without changing a single pool item. It also localizes
 ///   a bounding box per detected object rather than classifying the whole frame's dominant
 ///   content, which should generally help smaller objects held up against background clutter.
@@ -96,12 +96,17 @@ public class UppyObjectEmbedderModule: Module {
     if let detector = detector {
       return detector
     }
-    guard let modelPath = Bundle(for: UppyObjectEmbedderModule.self).path(forResource: "efficientdet_lite0", ofType: "tflite") else {
+    guard let modelPath = Bundle(for: UppyObjectEmbedderModule.self).path(forResource: "efficientdet_lite2", ofType: "tflite") else {
       throw UppyObjectEmbedderError.modelNotFound
     }
     let options = ObjectDetectorOptions()
     options.baseOptions.modelAssetPath = modelPath
-    options.maxResults = 5
+    // Results come back sorted by score, so a low-scoring true match (small items like a fork or
+    // toothbrush often score well under the confident-detection range) is silently dropped if
+    // maxResults is small and the frame also contains a person/table/etc. The JS side applies the
+    // real match threshold; this floor only keeps obvious noise out.
+    options.maxResults = 20
+    options.scoreThreshold = 0.1
     let newDetector = try ObjectDetector(options: options)
     detector = newDetector
     return newDetector
