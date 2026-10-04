@@ -7,18 +7,16 @@ export type ImageLabel = { text: string; confidence: number };
 const CONFIDENCE_THRESHOLD = 0.25;
 
 // A handful of the label vocabulary (MediaPipe's Object Detector -- COCO's 80 class names)
-// doesn't exactly match our pool's display names (e.g. "Bag" often reads as "Baggage" or
-// "Handbag", COCO's own official class is spelled "hair drier" not "hair dryer"). This keeps the
-// match forgiving without hardcoding every device's full label set, which varies.
+// doesn't exactly match our pool's names (e.g. "vehicle" is car/truck/bicycle/..., "couch" is
+// often also called a sofa, COCO's table class is "dining table"). Matching is forgiving so a
+// correct detection isn't rejected over wording.
 const SYNONYMS: Record<string, string[]> = {
   backpack: ['backpack', 'bag', 'handbag', 'baggage', 'rucksack', 'knapsack'],
   spoon: ['spoon', 'cutlery', 'tableware', 'utensil'],
-  bowl: ['bowl', 'tableware', 'dishware'],
-  // COCO's own official 80-class label for this is spelled "hair drier", not "hair dryer" --
-  // without it, iOS's Object Detector (which returns COCO class names verbatim) would never match
-  // even a perfect, correctly-detected photo.
-  hairdryer: ['hair dryer', 'hairdryer', 'hair drier', 'blow dryer'],
   refrigerator: ['refrigerator', 'fridge'],
+  couch: ['couch', 'sofa'],
+  // COCO's class is "dining table"; the pool item is shown as Dining Table.
+  table: ['dining table', 'table'],
   // "Vehicle" isn't itself a COCO class, but car/truck/bicycle/motorcycle each are — matching any
   // of them (rather than requiring the generic word "vehicle") covers what the detector actually
   // returns for a real photo.
