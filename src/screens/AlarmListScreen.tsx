@@ -1,9 +1,9 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, FlatList, Image, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AlarmClockIcon, GearIcon, PlusIcon, TargetIcon } from '../components/icons';
+import { GearIcon, PlusIcon, TargetIcon } from '../components/icons';
 import { t } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 import { listAlarms, setAlarmEnabled } from '../services/alarmRepository';
@@ -11,6 +11,8 @@ import { colors, fonts } from '../theme/theme';
 import type { Alarm } from '../types/alarm';
 import { repeatSummary } from '../types/alarm';
 import { formatTimeParts } from '../utils/time';
+
+const APP_ICON = require('../../assets/icon.png');
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AlarmList'>;
 
@@ -40,9 +42,7 @@ export function AlarmListScreen({ navigation }: Props) {
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
-          <View style={styles.logoBadge}>
-            <AlarmClockIcon size={18} color={colors.gold} />
-          </View>
+          <Image source={APP_ICON} style={styles.logoBadge} accessibilityIgnoresInvertColors />
           <Text style={styles.headerTitle}>{t('alarmList.title')}</Text>
         </View>
         <View style={styles.headerRight}>
@@ -157,10 +157,7 @@ const styles = StyleSheet.create({
   logoBadge: {
     width: 34,
     height: 34,
-    borderRadius: 10,
-    backgroundColor: colors.goldSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 8,
   },
   headerTitle: {
     fontFamily: fonts.serif,

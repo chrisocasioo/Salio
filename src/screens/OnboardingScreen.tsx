@@ -1,6 +1,6 @@
 import { useCameraPermissions } from 'expo-camera';
 import React, { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlarmClockIcon, CameraIcon, CheckIcon, SoundWaveIcon } from '../components/icons';
 import { GoldButton } from '../components/GoldButton';
@@ -15,6 +15,7 @@ import {
 } from '../services/alarmScheduler';
 import { colors, fonts, radii } from '../theme/theme';
 
+const APP_ICON = require('../../assets/icon.png');
 const ANDROID_EXACT_ALARM_MIN_SDK = 31;
 const isAndroid = Platform.OS === 'android';
 const androidSdkInt = isAndroid ? (Platform.Version as number) : 0;
@@ -47,9 +48,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.logoBadge}>
-            <AlarmClockIcon size={26} color={colors.gold} />
-          </View>
+          <Image source={APP_ICON} style={styles.logoBadge} accessibilityIgnoresInvertColors />
           <Text style={styles.title}>{t('onboarding.noticeTitle')}</Text>
           <Text style={styles.subtitle}>{t('onboarding.noticeSubtitle')}</Text>
 
@@ -75,9 +74,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.logoBadge}>
-          <AlarmClockIcon size={26} color={colors.gold} />
-        </View>
+        <Image source={APP_ICON} style={styles.logoBadge} accessibilityIgnoresInvertColors />
         <Text style={styles.title}>{t('onboarding.title')}</Text>
         <Text style={styles.subtitle}>{t('onboarding.subtitle')}</Text>
 
@@ -202,12 +199,9 @@ const styles = StyleSheet.create({
   },
   logoBadge: {
     alignSelf: 'center',
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: colors.goldSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 64,
+    height: 64,
+    borderRadius: 14,
     marginBottom: 8,
   },
   title: {
