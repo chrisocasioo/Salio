@@ -100,7 +100,7 @@ public class UppyObjectEmbedderModule: Module {
     // toothbrush often score well under the confident-detection range) is silently dropped if
     // maxResults is small and the frame also contains a person/table/etc. The JS side applies the
     // real match threshold; this floor only keeps obvious noise out.
-    options.maxResults = 20
+    options.maxResults = 50
     options.scoreThreshold = 0.1
     let newDetector = try ObjectDetector(options: options)
     detector = newDetector
